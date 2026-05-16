@@ -1,0 +1,3 @@
+[submodule "avalanche-back"]
+	path = avalanche-back
+	url = https://github.com/Juarex9/avalanche-back.git
