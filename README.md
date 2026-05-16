@@ -52,7 +52,7 @@ Los bancos no pueden transferir en cadena sin **exponer montos** al mercado. El 
 ## Arranque rápido
 
 ```bash
-git clone https://github.com/Jehp23/avax-compliance.git
+git clone --recurse-submodules https://github.com/Jehp23/avax-compliance.git
 cd avax-compliance/frontend
 cp .env.example .env.local
 npm install
