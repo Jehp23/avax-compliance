@@ -6,6 +6,8 @@ import { useAccount } from "wagmi";
 
 import { Feedback } from "@/components/feedback";
 import { TxLink } from "@/components/tx-link";
+import { PageHeader } from "@/components/veila/page-header";
+import { PageShell } from "@/components/veila/page-shell";
 import { ZkProgress } from "@/components/zk-progress";
 import { useVeilaEerc } from "@/contexts/eerc-context";
 import { indexTransferOnServer } from "@/lib/index-transfer";
@@ -49,9 +51,7 @@ export default function RegistroPage() {
       const { key, transactionHash } = await sdk.register();
       persistDecryptionKey(key);
       setLastTx(transactionHash as `0x${string}`);
-      setFeedback(
-        `Registro exitoso · contrato ${shortAddress(contractAddress)}`,
-      );
+      setFeedback(`Registro exitoso · ${shortAddress(contractAddress)}`);
       if (address) {
         void indexTransferOnServer({
           txHash: transactionHash,
@@ -84,111 +84,95 @@ export default function RegistroPage() {
       : "";
 
   return (
-    <main id="main-content">
-      <section className="screen" aria-labelledby="registro-heading">
-        <div className="ob-wrap">
-          <p className="ob-kicker">REGISTRO INSTITUCIONAL · PROTOCOLO eERC20</p>
-          <h1 id="registro-heading" className="ob-title">
-            Pagos privados con
-            <br />
-            compliance regulatorio
-          </h1>
-          <p className="ob-desc">
-            Registro on-chain con BabyJubjub + ZK. La clave de descifrado se genera en tu
-            navegador. El auditor (CNBV) recibe una copia cifrada de cada monto en cada
-            transferencia.
-          </p>
+    <PageShell width="narrow">
+      <PageHeader
+        kicker="Registro"
+        title="Onboarding institucional"
+        description="Wallet, KYC demo y registro eERC20 con prueba ZK en Fuji."
+      />
 
-          <Feedback message={error} variant="error" />
-          <Feedback message={feedback} variant="success" />
-          {lastTx ? (
-            <p className="mb-4 text-[12px] text-[var(--text3)]">
-              Transacción: <TxLink hash={lastTx} />
-            </p>
-          ) : null}
-          {busy ? <ZkProgress /> : null}
+      <Feedback message={error} variant="error" />
+      <Feedback message={feedback} variant="success" />
+      {lastTx ? (
+        <p className="tx-feedback">
+          Transacción: <TxLink hash={lastTx} />
+        </p>
+      ) : null}
+      {busy ? <ZkProgress /> : null}
 
-          <ol className="steps" aria-label="Pasos de onboarding">
-            <li className={`step ${walletDone ? "done" : "current"}`}>
-              <span className="step-num">{walletDone ? "✓" : "1"}</span>
-              <div className="step-body">
-                <div className="step-name">Wallet conectada</div>
-                <div className="step-meta">MetaMask · Avalanche Fuji</div>
-              </div>
-              <span
-                className={`step-badge ${walletDone ? "badge-done" : "badge-current"}`}
-              >
-                {walletDone ? "listo" : "pendiente"}
-              </span>
-            </li>
-
-            <li className={`step ${kycDone ? "done" : walletDone ? "current" : ""}`}>
-              <span className="step-num">{kycDone ? "✓" : "2"}</span>
-              <div className="step-body">
-                <div className="step-name">KYC institucional</div>
-                <div className="step-meta">Checklist demo · integrar API en prod.</div>
-              </div>
-              <span
-                className={`step-badge ${kycDone ? "badge-done" : walletDone ? "badge-current" : "badge-pending"}`}
-              >
-                {kycDone ? "listo" : "pendiente"}
-              </span>
-            </li>
-
-            <li className={`step ${step3Class}`}>
-              <span className="step-num">{registered ? "✓" : "3"}</span>
-              <div className="step-body">
-                <div className="step-name">Registro eERC20</div>
-                <div className="step-meta">
-                  {registered
-                    ? "Registrado en contrato"
-                    : "Generá claves + prueba ZK on-chain"}
-                </div>
-              </div>
-              <span
-                className={`step-badge ${registered ? "badge-done" : step3Class === "current" ? "badge-current" : "badge-pending"}`}
-              >
-                {registered ? "listo" : "pendiente"}
-              </span>
-            </li>
-          </ol>
-
-          <label className="mb-4 flex items-start gap-2 text-[12px] text-[var(--text3)]">
-            <input
-              type="checkbox"
-              checked={kycAccepted}
-              onChange={(e) => setKycAccepted(e.target.checked)}
-              className="mt-0.5"
-            />
-            Confirmo operar como institución autorizada (placeholder KYC hasta integrar
-            proveedor real).
-          </label>
-
-          {!registered ? (
-            <button
-              type="button"
-              className="primary-btn mb-2"
-              disabled={busy || !walletDone || !kycDone || !sdkReady}
-              onClick={handleRegister}
-            >
-              {busy ? "Registrando…" : "Registrar en eERC20"}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="primary-btn"
-              onClick={() => router.push("/transferencias")}
-            >
-              Ir a transferencias
-            </button>
-          )}
-
-          <div className="note" role="note">
-            Contrato: {shortAddress(contractAddress)} · clave auditor en contrato:{" "}
-            {sdk.isAuditorKeySet ? "configurada" : "pendiente (deploy back)"}
+      <ol className="steps" aria-label="Pasos de onboarding">
+        <li className={`step ${walletDone ? "done" : "current"}`}>
+          <span className="step-num">{walletDone ? "✓" : "1"}</span>
+          <div className="step-body">
+            <div className="step-name">Wallet conectada</div>
+            <div className="step-meta">MetaMask · Fuji</div>
           </div>
-        </div>
-      </section>
-    </main>
+          <span
+            className={`step-badge ${walletDone ? "badge-done" : "badge-current"}`}
+          >
+            {walletDone ? "listo" : "pendiente"}
+          </span>
+        </li>
+        <li className={`step ${kycDone ? "done" : walletDone ? "current" : ""}`}>
+          <span className="step-num">{kycDone ? "✓" : "2"}</span>
+          <div className="step-body">
+            <div className="step-name">KYC institucional</div>
+            <div className="step-meta">Checklist demo</div>
+          </div>
+          <span
+            className={`step-badge ${kycDone ? "badge-done" : walletDone ? "badge-current" : "badge-pending"}`}
+          >
+            {kycDone ? "listo" : "pendiente"}
+          </span>
+        </li>
+        <li className={`step ${step3Class}`}>
+          <span className="step-num">{registered ? "✓" : "3"}</span>
+          <div className="step-body">
+            <div className="step-name">Registro eERC20</div>
+            <div className="step-meta">
+              {registered ? "Activo en contrato" : "Claves + ZK on-chain"}
+            </div>
+          </div>
+          <span
+            className={`step-badge ${registered ? "badge-done" : step3Class === "current" ? "badge-current" : "badge-pending"}`}
+          >
+            {registered ? "listo" : "pendiente"}
+          </span>
+        </li>
+      </ol>
+
+      <label className="kyc-check">
+        <input
+          type="checkbox"
+          checked={kycAccepted}
+          onChange={(e) => setKycAccepted(e.target.checked)}
+        />
+        Confirmo operar como institución autorizada (KYC demo).
+      </label>
+
+      {!registered ? (
+        <button
+          type="button"
+          className="primary-btn"
+          disabled={busy || !walletDone || !kycDone || !sdkReady}
+          onClick={handleRegister}
+        >
+          {busy ? "Registrando…" : "Registrar en eERC20"}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="primary-btn"
+          onClick={() => router.push("/transferencias")}
+        >
+          Ir a transferencias
+        </button>
+      )}
+
+      <div className="note" role="note">
+        Contrato {shortAddress(contractAddress)} · auditor{" "}
+        {sdk.isAuditorKeySet ? "configurado" : "pendiente"}
+      </div>
+    </PageShell>
   );
 }

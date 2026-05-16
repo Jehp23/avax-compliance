@@ -20,7 +20,7 @@ export function DemoStatusBar() {
   const { sdk } = useVeilaEerc();
   const [circuitsOk, setCircuitsOk] = useState<boolean | null>(null);
   const [dbOk, setDbOk] = useState<boolean | null>(null);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   useEffect(() => {
     fetch("/circuits/RegistrationCircuit.wasm", { method: "HEAD" })
@@ -102,8 +102,8 @@ export function DemoStatusBar() {
       role="region"
       aria-label="Estado de la demo"
     >
-      <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-2 px-4 py-2">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="demo-status-inner">
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <span
             className={`demo-status-pill ${allOk ? "ok" : "warn"}`}
             title={allOk ? "Listo para demo en vivo" : `${readyCount}/${checks.length} checks`}

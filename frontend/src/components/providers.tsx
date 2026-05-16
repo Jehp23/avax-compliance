@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { type State, WagmiProvider } from "wagmi";
 
+import { ThemeProvider } from "@/components/theme-provider";
 import { EercProvider } from "@/contexts/eerc-context";
 import { wagmiConfig } from "@/lib/wagmi-config";
 
@@ -28,7 +29,9 @@ export function Providers({ children, initialState }: ProvidersProps) {
   return (
     <WagmiProvider config={wagmiConfig} initialState={initialState}>
       <QueryClientProvider client={queryClient}>
-        <EercProvider>{children}</EercProvider>
+        <ThemeProvider>
+          <EercProvider>{children}</EercProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );

@@ -87,7 +87,7 @@ export function TransferHistory({ address, refreshKey = 0 }: TransferHistoryProp
           row.fromAddress.toLowerCase() === address!.toLowerCase();
         const counterparty = isOut ? row.toAddress : row.fromAddress;
         return (
-          <div key={row.id} className="tx-row">
+          <div key={row.id} className="tx-row tx-row--static">
             <div>
               <span className="zk-tag">{row.transferType}</span>
             </div>

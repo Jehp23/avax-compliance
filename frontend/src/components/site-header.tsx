@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { LogoMark } from "@/components/logo-mark";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { WalletButton } from "@/components/wallet-button";
 
 const NAV = [
@@ -18,22 +19,20 @@ export function SiteHeader() {
 
   return (
     <header className="site-header">
-      <Link href="/" className="logo" aria-label="Veila — inicio">
-        <LogoMark />
-        Veila
-      </Link>
+      <div className="site-header-side site-header-side--start">
+        <Link href="/" className="logo" aria-label="Cello — inicio">
+          <LogoMark />
+        </Link>
+      </div>
 
-      <nav
-        className="nav-tabs max-w-[min(100vw-120px,360px)] overflow-x-auto [-webkit-overflow-scrolling:touch]"
-        aria-label="Secciones de la aplicación"
-      >
+      <nav className="site-header-nav nav-tabs" aria-label="Secciones de la aplicación">
         {NAV.map(({ href, label }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
               key={href}
               href={href}
-              className="tab shrink-0"
+              className="tab"
               aria-current={active ? "page" : undefined}
               data-active={active ? "true" : "false"}
               scroll={false}
@@ -44,7 +43,8 @@ export function SiteHeader() {
         })}
       </nav>
 
-      <div className="nav-right shrink-0">
+      <div className="site-header-side site-header-side--end nav-right">
+        <ThemeToggle />
         <div className="net-pill" title="Red de prueba">
           <span className="net-dot" aria-hidden />
           Avalanche Fuji

@@ -19,11 +19,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Veila · Pagos eERC20 + auditoría CNBV",
+  title: "Cello · Pagos eERC20 + auditoría CNBV",
   description:
     "Pagos institucionales privados en Avalanche Fuji con EncryptedERC (eERC20), ZK y panel regulatorio.",
   openGraph: {
-    title: "Veila · eERC20 en Avalanche",
+    title: "Cello · eERC20 en Avalanche",
     description:
       "Privados para el sistema financiero · auditables para el regulador. Hackathon Avalanche LatAm.",
     type: "website",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Veila · eERC20 + compliance",
+    title: "Cello · eERC20 + compliance",
     description: "Pagos institucionales privados con auditoría nativa en Avalanche.",
   },
 };
@@ -50,6 +50,13 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full`}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var k="cello-theme";var s=localStorage.getItem(k);var d=s==="dark"||(s!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(d)document.documentElement.setAttribute("data-theme","dark")}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-[var(--bg)] text-[var(--text)]">
         <Providers initialState={initialState}>{children}</Providers>
       </body>
