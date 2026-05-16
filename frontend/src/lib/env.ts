@@ -1,6 +1,6 @@
 /** Variables públicas validadas en build/runtime del cliente. */
 
-export type VeilaPublicEnv = {
+export type CelloPublicEnv = {
   eercContract: `0x${string}` | null;
   eercMode: "standalone" | "converter";
   converterErc20: `0x${string}` | null;
@@ -20,7 +20,7 @@ function readAddress(key: string): `0x${string}` | null {
   return raw as `0x${string}`;
 }
 
-export function getPublicEnv(): VeilaPublicEnv {
+export function getPublicEnv(): CelloPublicEnv {
   const mode =
     process.env.NEXT_PUBLIC_EERC_MODE === "converter"
       ? "converter"

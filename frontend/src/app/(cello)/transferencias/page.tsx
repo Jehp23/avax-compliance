@@ -8,14 +8,14 @@ import { useAccount } from "wagmi";
 import { Feedback } from "@/components/feedback";
 import { TxLink } from "@/components/tx-link";
 import { TransferHistory } from "@/components/transfer-history";
-import { EncBadge } from "@/components/veila/enc-badge";
-import { PageHeader } from "@/components/veila/page-header";
-import { PageShell } from "@/components/veila/page-shell";
-import { WalletStatus } from "@/components/veila/wallet-status";
+import { EncBadge } from "@/components/cello/enc-badge";
+import { PageHeader } from "@/components/cello/page-header";
+import { PageShell } from "@/components/cello/page-shell";
+import { WalletStatus } from "@/components/cello/wallet-status";
 import { ZkProgress } from "@/components/zk-progress";
 import {
   useEncryptedBalanceHook,
-  useVeilaEerc,
+  useCelloEerc,
 } from "@/contexts/eerc-context";
 import { getVerifiedCounterparties } from "@/data/demo";
 import { getEercContractAddress } from "@/lib/contracts";
@@ -24,7 +24,7 @@ import { shortAddress } from "@/lib/format-address";
 
 export default function TransferenciasPage() {
   const { address, isConnected } = useAccount();
-  const { sdk } = useVeilaEerc();
+  const { sdk } = useCelloEerc();
   const balance = useEncryptedBalanceHook();
   const contract = getEercContractAddress();
 

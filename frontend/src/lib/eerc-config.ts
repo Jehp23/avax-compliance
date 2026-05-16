@@ -1,4 +1,4 @@
-import type { VeilaPublicEnv } from "@/lib/env";
+import type { CelloPublicEnv } from "@/lib/env";
 
 /** Contratos de referencia en Fuji (3dent / Ava Labs demo). Override con env en prod. */
 export const FUJI_EERC_STANDALONE =
@@ -36,14 +36,14 @@ export const CIRCUIT_CONFIG = {
   },
 } as const;
 
-export function resolveEercContract(env: VeilaPublicEnv): `0x${string}` {
+export function resolveEercContract(env: CelloPublicEnv): `0x${string}` {
   if (env.eercContract) return env.eercContract;
   return env.eercMode === "converter"
     ? FUJI_EERC_CONVERTER
     : FUJI_EERC_STANDALONE;
 }
 
-export function resolveConverterToken(env: VeilaPublicEnv): `0x${string}` | undefined {
+export function resolveConverterToken(env: CelloPublicEnv): `0x${string}` | undefined {
   if (env.eercMode !== "converter") return undefined;
   return env.converterErc20 ?? FUJI_DEMO_ERC20;
 }

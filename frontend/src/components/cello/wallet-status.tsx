@@ -3,12 +3,12 @@
 import { useAccount } from "wagmi";
 import { avalancheFuji } from "wagmi/chains";
 
-import { useVeilaEerc } from "@/contexts/eerc-context";
+import { useCelloEerc } from "@/contexts/eerc-context";
 import { shortAddress } from "@/lib/format-address";
 
 export function WalletStatus() {
   const { address, isConnected, chainId } = useAccount();
-  const { sdk } = useVeilaEerc();
+  const { sdk } = useCelloEerc();
 
   const rows = [
     {

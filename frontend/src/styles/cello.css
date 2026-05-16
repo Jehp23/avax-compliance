@@ -1632,22 +1632,22 @@ aside {
 }
 
 /* —— Sistema unificado de páginas —— */
-.veila-page {
+.cello-page {
   flex: 1;
   padding: 32px 24px 48px;
 }
 
-.veila-page--narrow {
+.cello-page--narrow {
   max-width: 520px;
   margin: 0 auto;
 }
 
-.veila-page--wide {
+.cello-page--wide {
   max-width: 1100px;
   margin: 0 auto;
 }
 
-.veila-page--full {
+.cello-page--full {
   max-width: none;
   padding: 0;
 }
@@ -1660,33 +1660,33 @@ aside {
   margin-bottom: 24px;
 }
 
-.veila-page--narrow .page-header,
-.veila-page--wide .page-header {
+.cello-page--narrow .page-header,
+.cello-page--wide .page-header {
   flex-direction: column;
   align-items: center;
   text-align: center;
 }
 
-.veila-page--narrow .page-header-body,
-.veila-page--wide .page-header-body {
+.cello-page--narrow .page-header-body,
+.cello-page--wide .page-header-body {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.veila-page--narrow .page-desc,
-.veila-page--wide .page-desc {
+.cello-page--narrow .page-desc,
+.cello-page--wide .page-desc {
   text-align: center;
   margin-left: auto;
   margin-right: auto;
 }
 
-.veila-page--narrow .btn-row,
-.veila-page--wide .btn-row {
+.cello-page--narrow .btn-row,
+.cello-page--wide .btn-row {
   justify-content: center;
 }
 
-.veila-page--narrow .kyc-check {
+.cello-page--narrow .kyc-check {
   justify-content: center;
 }
 
@@ -1893,7 +1893,7 @@ aside {
 }
 
 @media (max-width: 640px) {
-  .veila-page {
+  .cello-page {
     padding: 20px 16px 32px;
   }
 

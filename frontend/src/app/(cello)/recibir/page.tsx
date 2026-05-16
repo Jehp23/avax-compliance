@@ -4,14 +4,14 @@ import { useState } from "react";
 import { useAccount } from "wagmi";
 
 import { Feedback } from "@/components/feedback";
-import { PageHeader } from "@/components/veila/page-header";
-import { PageShell } from "@/components/veila/page-shell";
-import { useVeilaEerc } from "@/contexts/eerc-context";
+import { PageHeader } from "@/components/cello/page-header";
+import { PageShell } from "@/components/cello/page-shell";
+import { useCelloEerc } from "@/contexts/eerc-context";
 import { explorerAddressUrl } from "@/lib/explorer";
 
 export default function RecibirPage() {
   const { address, isConnected } = useAccount();
-  const { sdk } = useVeilaEerc();
+  const { sdk } = useCelloEerc();
   const [copyMsg, setCopyMsg] = useState<string | null>(null);
 
   async function copyAddress() {

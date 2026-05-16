@@ -66,16 +66,16 @@ export function EercProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useVeilaEerc(): EercContextValue {
+export function useCelloEerc(): EercContextValue {
   const ctx = useContext(EercContext);
   if (!ctx) {
-    throw new Error("useVeilaEerc debe usarse dentro de <EercProvider>");
+    throw new Error("useCelloEerc debe usarse dentro de <EercProvider>");
   }
   return ctx;
 }
 
 export function useEncryptedBalanceHook() {
-  const { sdk, env } = useVeilaEerc();
+  const { sdk, env } = useCelloEerc();
   const token = resolveConverterToken(env);
   return sdk.useEncryptedBalance(token);
 }

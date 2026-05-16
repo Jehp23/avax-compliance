@@ -1,4 +1,4 @@
-# Checklist de deploy — Veila (coordinación front + back)
+# Checklist de deploy — Cello (coordinación front + back)
 
 Usá esta lista el día del deploy. Cada ítem tiene responsable y verificación.
 
@@ -14,11 +14,10 @@ Usá esta lista el día del deploy. Cada ítem tiene responsable y verificación
 
 Ver detalle: [avalanche-back/docs/DEPLOY-EERC.md](../avalanche-back/docs/DEPLOY-EERC.md)
 
-- [ ] Deploy **EncryptedERC** en Fuji (standalone recomendado para hackathon)
-- [ ] Configurar **auditor public key** (`setContractAuditorPublicKey`) con wallet auditor
-- [ ] Anotar: dirección contrato, bloque deploy, owner, auditor address
-- [ ] Registrar en Fuji las 3 wallets demo vía Veila `/registro` o script
-- [ ] (Opcional) Mint inicial de tokens privados al owner para pruebas
+- [x] Deploy **EncryptedERC** en Fuji — `0x45C1316953c92C402AB9e14EA628182A3494FD7F`
+- [x] Auditor — FinNova `0xC8af2C4e87C942F82BaBC4da98364C2c1A82DF32`
+- [x] Registro deployer + FinNova (scripts) + mint 5000 CELL al deployer
+- [ ] Importar claves `sessionStorage` en browser (ver [FASES-DEMO.md](./FASES-DEMO.md))
 
 **Entregable al front:** archivo `.env.production.snippet` (ver plantilla abajo)
 
@@ -49,7 +48,7 @@ NEXT_PUBLIC_DEMO_RUTALOG=0x...
 
 Seguir [DEMO.md](./DEMO.md). Antes de subir al escenario:
 
-- [ ] Barra de estado en Veila: todos los checks en verde
+- [ ] Barra de estado en Cello: todos los checks en verde
 - [ ] Wallet A y B ya registradas
 - [ ] Wallet auditor conectada en pestaña aparte (o segundo navegador)
 - [ ] RPC estable (si el público falla, tener RPC privado en env)

@@ -4,9 +4,9 @@ import { type FormEvent, useState } from "react";
 import { useAccount } from "wagmi";
 
 import { Feedback } from "@/components/feedback";
-import { PageHeader } from "@/components/veila/page-header";
-import { PageShell } from "@/components/veila/page-shell";
-import { useVeilaEerc } from "@/contexts/eerc-context";
+import { PageHeader } from "@/components/cello/page-header";
+import { PageShell } from "@/components/cello/page-shell";
+import { useCelloEerc } from "@/contexts/eerc-context";
 import { getPublicEnv } from "@/lib/contracts";
 import { explorerTx } from "@/lib/eerc-config";
 import { shortAddress } from "@/lib/format-address";
@@ -21,7 +21,7 @@ type DecryptedRow = {
 
 export default function AuditoriaPage() {
   const { address, isConnected } = useAccount();
-  const { sdk, contractAddress } = useVeilaEerc();
+  const { sdk, contractAddress } = useCelloEerc();
   const env = getPublicEnv();
 
   const [unlocked, setUnlocked] = useState(false);

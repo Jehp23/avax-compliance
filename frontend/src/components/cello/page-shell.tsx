@@ -10,7 +10,7 @@ export function PageShell({ children, width = "narrow" }: PageShellProps) {
   return (
     <main
       id="main-content"
-      className={`veila-page veila-page--${width} screen`}
+      className={`cello-page cello-page--${width} screen`}
     >
       {children}
     </main>

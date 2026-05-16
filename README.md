@@ -38,12 +38,14 @@ Los bancos no pueden transferir en cadena sin **exponer montos** al mercado. El 
 
 ## Demo en 60 segundos
 
+**Producción (Fuji):** https://cello-avax.vercel.app · [health](https://cello-avax.vercel.app/api/health)
+
 | Paso | Ruta | Qué muestra |
 |:----:|------|-------------|
-| 1 | [`/registro`](http://localhost:3000/registro) | Wallet + KYC demo + `register()` con prueba ZK |
-| 2 | [`/transferencias`](http://localhost:3000/transferencias) | Saldo descifrado + `privateTransfer` |
-| 3 | [`/recibir`](http://localhost:3000/recibir) | Dirección institucional para cobrar |
-| 4 | [`/auditoria`](http://localhost:3000/auditoria) | `auditorDecrypt()` — montos en claro solo para el auditor |
+| 1 | [`/registro`](https://cello-avax.vercel.app/registro) | Wallet + KYC demo + `register()` con prueba ZK |
+| 2 | [`/transferencias`](https://cello-avax.vercel.app/transferencias) | Saldo descifrado + `privateTransfer` |
+| 3 | [`/recibir`](https://cello-avax.vercel.app/recibir) | Dirección institucional para cobrar |
+| 4 | [`/auditoria`](https://cello-avax.vercel.app/auditoria) | `auditorDecrypt()` — montos en claro solo para el auditor |
 
 **Barra de estado** (verde = listo): wallet · Fuji · circuitos ZK · contrato · SDK · registro · auditor key · Neon DB.
 

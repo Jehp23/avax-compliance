@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { avalancheFuji } from "wagmi/chains";
 
-import { useVeilaEerc } from "@/contexts/eerc-context";
+import { useCelloEerc } from "@/contexts/eerc-context";
 import { useCircuitsReady } from "@/hooks/use-circuits-ready";
 import { getEercContractAddress, isEercConfigured } from "@/lib/contracts";
 import { shortAddress } from "@/lib/format-address";
@@ -18,7 +18,7 @@ type Check = {
 
 export function DemoStatusBar() {
   const { isConnected, chainId, address } = useAccount();
-  const { sdk } = useVeilaEerc();
+  const { sdk } = useCelloEerc();
   const circuitsOk = useCircuitsReady();
   const [dbOk, setDbOk] = useState<boolean | null>(null);
   const [collapsed, setCollapsed] = useState(true);

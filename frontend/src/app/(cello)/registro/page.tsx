@@ -6,17 +6,17 @@ import { useAccount } from "wagmi";
 
 import { Feedback } from "@/components/feedback";
 import { TxLink } from "@/components/tx-link";
-import { PageHeader } from "@/components/veila/page-header";
-import { PageShell } from "@/components/veila/page-shell";
+import { PageHeader } from "@/components/cello/page-header";
+import { PageShell } from "@/components/cello/page-shell";
 import { ZkProgress } from "@/components/zk-progress";
-import { useVeilaEerc } from "@/contexts/eerc-context";
+import { useCelloEerc } from "@/contexts/eerc-context";
 import { indexTransferOnServer } from "@/lib/index-transfer";
 import { shortAddress } from "@/lib/format-address";
 
 export default function RegistroPage() {
   const router = useRouter();
   const { isConnected, address } = useAccount();
-  const { sdk, persistDecryptionKey, contractAddress } = useVeilaEerc();
+  const { sdk, persistDecryptionKey, contractAddress } = useCelloEerc();
 
   const [kycAccepted, setKycAccepted] = useState(false);
   const [busy, setBusy] = useState(false);

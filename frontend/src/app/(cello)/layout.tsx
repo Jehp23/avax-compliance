@@ -3,7 +3,7 @@ import { DemoStatusBar } from "@/components/demo-status-bar";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
-export default function VeilaSectionLayout({
+export default function CelloSectionLayout({
   children,
 }: {
   children: React.ReactNode;

@@ -1,6 +1,6 @@
-# Documentación Veila — índice para el equipo
+# Documentación Cello — índice para el equipo
 
-Este monorepo une **frontend** (Veila UI + eERC SDK) y **avalanche-back** (contratos). Para la hackathon el producto corre sobre **EncryptedERC (eERC20)** en Fuji, no sobre InterbankVault.
+Este monorepo une **frontend** (Cello UI + eERC SDK) y **avalanche-back** (contratos). Para la hackathon el producto corre sobre **EncryptedERC (eERC20)** en Fuji, no sobre InterbankVault.
 
 ## Por dónde empezar
 
@@ -16,7 +16,7 @@ Este monorepo une **frontend** (Veila UI + eERC SDK) y **avalanche-back** (contr
 ```mermaid
 sequenceDiagram
   participant B as Banco A (wallet)
-  participant V as Veila UI
+  participant V as Cello UI
   participant C as eERC20 Fuji
   participant R as CNBV (auditor)
 
