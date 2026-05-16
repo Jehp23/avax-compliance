@@ -33,15 +33,14 @@ RECIPIENT_ADDRESS=0x79d23BB592FD230e441874d0e889C58f8FD92E07 MINT_AMOUNT=5000 \
   npx hardhat run scripts/mint-demo-fuji.ts --network fuji
 ```
 
-### Importar claves en el navegador (obligatorio si registraste vía script)
+### Desbloquear claves en producción (sin consola)
 
-Conectá la wallet en Cello y en la consola del navegador (F12):
+1. https://cello-avax.vercel.app/registro  
+2. Conectar wallet demo (Bankaool o FinNova)  
+3. **Cargar clave desde el deploy** → código: `cello-hackathon-2026`  
+4. Verificar: https://cello-avax.vercel.app/api/demo/status → `demoUnlockConfigured: true`
 
-**Bankaool (deployer)** — ver `EncryptedERC/deployments/demo-keys/0x79d23bb5....json` → campo `sessionStorageHint`.
-
-**FinNova** — mismo archivo para `0xc8af2c4e...`.
-
-Sin esto el SDK no descifra saldos aunque el registro on-chain exista.
+Scripts Hardhat versionados: `avalanche-back/scripts/eerc-fuji/` (ejecutar desde `EncryptedERC/`).
 
 ---
 
