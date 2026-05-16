@@ -1,59 +1,54 @@
-# Veila — Frontend
+<div align="center">
 
-App **Next.js 16** para pagos institucionales con **eERC20** (`@avalabs/eerc-sdk`) en Avalanche Fuji.
+# Cello — Frontend
 
-## Documentación del equipo
+Next.js 16 · eERC20 · Avalanche Fuji
 
-| Doc | Contenido |
-|-----|-----------|
-| [docs/DEPLOY.md](./docs/DEPLOY.md) | Deploy Vercel, health check, checklist |
-| [docs/ENV.md](./docs/ENV.md) | Variables de entorno |
-| [../docs/DEMO.md](../docs/DEMO.md) | Guion de demo en vivo |
-| [../docs/DEPLOY.md](../docs/DEPLOY.md) | Coordinación front + back |
-| [../avalanche-back/docs/DEPLOY-EERC.md](../avalanche-back/docs/DEPLOY-EERC.md) | Deploy contratos |
+</div>
 
-## Arranque rápido
+App institucional para pagos privados con **@avalabs/eerc-sdk**. Circuitos ZK en el cliente, historial en **Neon** (sin montos en claro).
+
+## Arranque
 
 ```bash
 cp .env.example .env.local
 npm install
-npm run circuits:fetch   # si public/circuits/ está vacío
+npm run circuits:fetch
 npm run dev --webpack
 ```
 
-- Landing: http://localhost:3000/
-- Registro: http://localhost:3000/registro
-
-## Rutas
-
 | Ruta | Descripción |
 |------|-------------|
-| `/` | Landing + narrativa producto |
-| `/registro` | Wallet + KYC demo + `sdk.register()` |
-| `/transferencias` | Saldo privado + `privateTransfer` |
-| `/recibir` | Dirección `0x` para pagos entrantes |
-| `/auditoria` | `sdk.auditorDecrypt()` (wallet auditor) |
-| `/api/health` | Health check para deploy |
+| `/` | Landing |
+| `/registro` | Onboarding + `register()` |
+| `/transferencias` | `privateTransfer` + historial |
+| `/recibir` | Dirección para cobros |
+| `/auditoria` | `auditorDecrypt()` |
+
+## API
+
+| Endpoint | Uso |
+|----------|-----|
+| `GET /api/health` | Deploy: circuitos, contrato, DB |
+| `GET /api/db/health` | Neon conectada |
+| `GET/POST /api/transfers` | Índice de transacciones |
+| `POST /api/institutions` | Metadata institucional |
 
 ## Scripts
 
 ```bash
-npm run dev --webpack    # desarrollo
-npm run build            # producción (webpack)
+npm run dev --webpack
+npm run build
 npm run lint
-npm run circuits:fetch   # WASM/ZKEY → public/circuits/
+npm run circuits:fetch
+npm run db:push          # requiere DATABASE_URL
 ```
 
-## Barra de estado
+## Docs
 
-En rutas `/registro`, `/transferencias`, etc. aparece la **barra de preparación demo** (wallet, Fuji, circuitos, contrato, SDK, registro, auditor key). Verde = listo para pitch.
+- [docs/ENV.md](./docs/ENV.md) — variables
+- [docs/DEPLOY.md](./docs/DEPLOY.md) — Vercel
+- [docs/DATABASE.md](./docs/DATABASE.md) — Neon
+- [../docs/DEMO.md](../docs/DEMO.md) — guion para jueces
 
-## Stack
-
-- Next.js App Router · TypeScript · Tailwind 4
-- wagmi 2 + viem 2 + TanStack Query
-- `@avalabs/eerc-sdk` · circuitos en `/public/circuits/`
-
-## Deploy
-
-Ver [docs/DEPLOY.md](./docs/DEPLOY.md). Root Directory en Vercel: **`frontend`**.
+Deploy en Vercel con **Root Directory:** `frontend`.

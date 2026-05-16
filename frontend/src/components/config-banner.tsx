@@ -1,32 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
+import { useCircuitsReady } from "@/hooks/use-circuits-ready";
 import { getEercContractAddress } from "@/lib/contracts";
 
 export function ConfigBanner() {
-  const [circuitsOk, setCircuitsOk] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    fetch("/circuits/RegistrationCircuit.wasm", { method: "HEAD" })
-      .then((r) => setCircuitsOk(r.ok))
-      .catch(() => setCircuitsOk(false));
-  }, []);
+  const circuitsOk = useCircuitsReady();
 
   if (circuitsOk !== false) return null;
 
   const contract = getEercContractAddress();
 
   return (
-    <div
-      className="border-b border-[var(--amber)] bg-[var(--amber-lt)] px-4 py-2 text-center text-[12px] text-[var(--amber)]"
-      role="status"
-    >
-      Faltan circuitos ZK en{" "}
-      <code className="font-mono">public/circuits/</code>. Ejecutá{" "}
-      <code className="font-mono">npm run circuits:fetch</code> en{" "}
-      <code className="font-mono">frontend/</code>. Contrato activo:{" "}
-      <code className="font-mono">{contract}</code>
+    <div className="config-banner" role="status">
+      Faltan circuitos ZK en <code>public/circuits/</code>. Ejecutá{" "}
+      <code>npm run circuits:fetch</code> en <code>frontend/</code>. Contrato:{" "}
+      <code>{contract}</code>
     </div>
   );
 }

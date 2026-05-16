@@ -15,7 +15,7 @@ export function WalletButton() {
 
   if (!isConnected || !address) {
     return (
-      <div className="flex flex-col items-end gap-1">
+      <div className="wallet-actions">
         <button
           type="button"
           className="wallet-pill"
@@ -25,11 +25,20 @@ export function WalletButton() {
           <span className="w-dot" aria-hidden />
           {isPending ? "Conectando…" : "Conectar wallet"}
         </button>
-        {error ? (
-          <span className="max-w-[220px] text-right text-[10px] text-[var(--red)]">
-            {error.message}
-          </span>
+        {!injected ? (
+          <p className="wallet-hint">
+            Instalá{" "}
+            <a
+              href="https://metamask.io/download/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              MetaMask
+            </a>{" "}
+            para continuar.
+          </p>
         ) : null}
+        {error ? <p className="wallet-error">{error.message}</p> : null}
       </div>
     );
   }
@@ -37,7 +46,7 @@ export function WalletButton() {
   const wrongNetwork = chainId !== avalancheFuji.id;
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="wallet-actions">
       <button type="button" className="wallet-pill" onClick={() => disconnect()}>
         <span className="w-dot" aria-hidden />
         {shortAddress(address)}
@@ -45,7 +54,7 @@ export function WalletButton() {
       {wrongNetwork ? (
         <button
           type="button"
-          className="rounded-md border border-[var(--amber)] bg-[var(--amber-lt)] px-2 py-1 text-[10px] font-medium text-[var(--amber)]"
+          className="network-warn-btn"
           disabled={switching}
           onClick={() => switchChain({ chainId: avalancheFuji.id })}
         >

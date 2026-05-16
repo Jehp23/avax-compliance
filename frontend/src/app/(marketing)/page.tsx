@@ -1,5 +1,20 @@
 import Link from "next/link";
 
+const FEATURES = [
+  {
+    title: "Privacidad",
+    text: "El público ve movimiento, no montos. ZK + ElGamal en cada operación.",
+  },
+  {
+    title: "Auditoría",
+    text: "Copia cifrada para el regulador en cada transferencia privada.",
+  },
+  {
+    title: "Avalanche",
+    text: "Fuji hoy; mismo stack eERC de Ava Labs listo para producción.",
+  },
+] as const;
+
 export default function HomePage() {
   return (
     <main id="main-content" className="landing screen">
@@ -25,29 +40,44 @@ export default function HomePage() {
           </div>
         </div>
 
+        <div className="landing-stats" aria-label="Capacidades">
+          <div className="landing-stat">
+            <span className="landing-stat-val">eERC20</span>
+            <span className="landing-stat-lbl">Token cifrado</span>
+          </div>
+          <div className="landing-stat">
+            <span className="landing-stat-val">ZK</span>
+            <span className="landing-stat-lbl">Pruebas en cliente</span>
+          </div>
+          <div className="landing-stat">
+            <span className="landing-stat-val">CNBV</span>
+            <span className="landing-stat-lbl">Vista auditor</span>
+          </div>
+        </div>
+
         <div className="landing-grid">
-          <article className="panel">
-            <h3 className="panel-title">Privacidad</h3>
-            <p className="panel-text">
-              El público ve movimiento, no montos. ZK + ElGamal en cada operación.
-            </p>
-          </article>
-          <article className="panel">
-            <h3 className="panel-title">Auditoría</h3>
-            <p className="panel-text">
-              Copia cifrada para el regulador en cada transferencia privada.
-            </p>
-          </article>
-          <article className="panel">
-            <h3 className="panel-title">Avalanche</h3>
-            <p className="panel-text">
-              Fuji hoy; mismo stack eERC de Ava Labs listo para producción.
-            </p>
-          </article>
+          {FEATURES.map((f) => (
+            <article key={f.title} className="panel">
+              <h3 className="panel-title">{f.title}</h3>
+              <p className="panel-text">{f.text}</p>
+            </article>
+          ))}
         </div>
 
         <p className="landing-diagram" aria-label="Flujo dual-lock">
-          Institución → ZK privado → eERC Fuji ← descifrado ← CNBV
+          <span className="landing-flow-step">Institución</span>
+          <span className="landing-flow-arrow" aria-hidden>
+            →
+          </span>
+          <span className="landing-flow-step">ZK privado</span>
+          <span className="landing-flow-arrow" aria-hidden>
+            →
+          </span>
+          <span className="landing-flow-step">eERC Fuji</span>
+          <span className="landing-flow-arrow" aria-hidden>
+            ←
+          </span>
+          <span className="landing-flow-step">CNBV</span>
         </p>
       </div>
     </main>

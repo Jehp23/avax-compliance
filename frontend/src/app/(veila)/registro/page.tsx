@@ -92,7 +92,16 @@ export default function RegistroPage() {
       />
 
       <Feedback message={error} variant="error" />
-      <Feedback message={feedback} variant="success" />
+      <Feedback
+        message={feedback}
+        variant={
+          feedback?.toLowerCase().includes("exitoso")
+            ? "success"
+            : busy
+              ? "loading"
+              : "info"
+        }
+      />
       {lastTx ? (
         <p className="tx-feedback">
           Transacción: <TxLink hash={lastTx} />

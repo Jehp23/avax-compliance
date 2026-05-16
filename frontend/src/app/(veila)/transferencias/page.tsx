@@ -130,7 +130,16 @@ export default function TransferenciasPage() {
           />
 
           <Feedback message={error} variant="error" />
-          <Feedback message={feedback} variant="success" />
+          <Feedback
+            message={feedback}
+            variant={
+              feedback?.toLowerCase().includes("correctamente")
+                ? "success"
+                : busy
+                  ? "loading"
+                  : "info"
+            }
+          />
           {lastTx ? (
             <p className="tx-feedback">
               Transacción: <TxLink hash={lastTx} />

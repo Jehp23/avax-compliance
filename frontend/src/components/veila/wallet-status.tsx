@@ -36,14 +36,14 @@ export function WalletStatus() {
   return (
     <div className="panel">
       <p className="panel-label">Estado</p>
-      <dl className="stat-list">
+      <ul className="stat-list">
         {rows.map((row) => (
-          <div key={row.key} className="stat-row">
-            <dt className="stat-key">{row.key}</dt>
-            <dd className={`stat-val ${row.ok ? "ok" : "warn"}`}>{row.value}</dd>
-          </div>
+          <li key={row.key} className="stat-row">
+            <span className="stat-key">{row.key}</span>
+            <span className={`stat-val ${row.ok ? "ok" : "warn"}`}>{row.value}</span>
+          </li>
         ))}
-      </dl>
+      </ul>
     </div>
   );
 }

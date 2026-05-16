@@ -1,6 +1,6 @@
 # Base de datos Neon (PostgreSQL)
 
-Veila usa **Neon** para metadata off-chain: instituciones/KYC e índice de transacciones (**sin montos en claro**).
+Cello usa **Neon** para metadata off-chain: instituciones/KYC e índice de transacciones (**sin montos en claro**).
 
 ## Variables
 

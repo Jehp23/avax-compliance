@@ -1910,3 +1910,270 @@ aside {
     width: 100%;
   }
 }
+
+/* —— Feedback —— */
+.feedback {
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.feedback--info {
+  background: var(--bg2);
+  color: var(--text2);
+}
+
+.feedback--success {
+  background: var(--green-lt);
+  border-color: color-mix(in srgb, var(--green) 35%, var(--border));
+  color: var(--green);
+}
+
+.feedback--error {
+  background: var(--red-lt);
+  border-color: color-mix(in srgb, var(--red) 35%, var(--border));
+  color: var(--red);
+}
+
+.feedback--info.feedback--loading {
+  border-style: dashed;
+}
+
+/* —— Config / demo bar —— */
+.config-banner {
+  border-bottom: 1px solid var(--amber);
+  background: var(--amber-lt);
+  padding: 8px 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--amber);
+}
+
+.config-banner code {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.demo-status-bar {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+}
+
+.demo-status-toggle {
+  font-size: 10px;
+  color: var(--text4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--sans);
+  padding: 4px 8px;
+}
+
+.demo-status-toggle:hover {
+  color: var(--text2);
+}
+
+/* —— Wallet —— */
+.wallet-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.wallet-hint,
+.wallet-error {
+  max-width: 220px;
+  text-align: right;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.wallet-hint {
+  color: var(--text3);
+}
+
+.wallet-hint a {
+  color: var(--text2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.wallet-error {
+  color: var(--red);
+}
+
+.network-warn-btn {
+  border: 1px solid var(--amber);
+  background: var(--amber-lt);
+  color: var(--amber);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 500;
+  font-family: var(--sans);
+  cursor: pointer;
+}
+
+.network-warn-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* —— Recibir —— */
+.receive-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg2);
+  padding: 18px;
+  margin-bottom: 8px;
+}
+
+.receive-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text4);
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.receive-card .receive-addr {
+  margin: 0 0 12px;
+}
+
+.receive-card .btn-row {
+  margin-top: 4px;
+}
+
+.status-ok {
+  color: var(--green);
+}
+
+.status-warn {
+  color: var(--amber);
+}
+
+.stat-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* —— Landing extras —— */
+.landing-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 32px;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.landing-stat {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 12px;
+  text-align: center;
+  background: var(--bg2);
+}
+
+.landing-stat-val {
+  display: block;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.landing-stat-lbl {
+  display: block;
+  font-size: 10px;
+  color: var(--text4);
+}
+
+.landing-diagram {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 12px;
+}
+
+.landing-flow-step {
+  font-weight: 500;
+  color: var(--text2);
+}
+
+.landing-flow-arrow {
+  color: var(--text4);
+}
+
+/* —— Footer —— */
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: var(--bg2);
+  margin-top: auto;
+  padding: 28px 24px 36px;
+}
+
+.site-footer-inner {
+  max-width: 880px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.site-footer-brand {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text4);
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+}
+
+.site-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 20px;
+  margin-bottom: 14px;
+}
+
+.site-footer-link {
+  font-size: 12px;
+  color: var(--text3);
+  text-decoration: none;
+  transition: color 0.12s;
+}
+
+.site-footer-link:hover {
+  color: var(--ink);
+}
+
+.site-footer-copy {
+  font-size: 11px;
+  color: var(--text4);
+  line-height: 1.5;
+}
+
+/* —— Transferencias: header alineado al contenido —— */
+.app-layout .main .page-header {
+  margin-bottom: 20px;
+}
+
+.app-layout .main .section-label {
+  margin-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .landing-stats {
+    grid-template-columns: 1fr;
+    max-width: 240px;
+  }
+}

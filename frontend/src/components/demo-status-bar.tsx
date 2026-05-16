@@ -5,6 +5,7 @@ import { useAccount } from "wagmi";
 import { avalancheFuji } from "wagmi/chains";
 
 import { useVeilaEerc } from "@/contexts/eerc-context";
+import { useCircuitsReady } from "@/hooks/use-circuits-ready";
 import { getEercContractAddress, isEercConfigured } from "@/lib/contracts";
 import { shortAddress } from "@/lib/format-address";
 
@@ -18,14 +19,11 @@ type Check = {
 export function DemoStatusBar() {
   const { isConnected, chainId, address } = useAccount();
   const { sdk } = useVeilaEerc();
-  const [circuitsOk, setCircuitsOk] = useState<boolean | null>(null);
+  const circuitsOk = useCircuitsReady();
   const [dbOk, setDbOk] = useState<boolean | null>(null);
   const [collapsed, setCollapsed] = useState(true);
 
   useEffect(() => {
-    fetch("/circuits/RegistrationCircuit.wasm", { method: "HEAD" })
-      .then((r) => setCircuitsOk(r.ok))
-      .catch(() => setCircuitsOk(false));
     fetch("/api/db/health")
       .then((r) => r.json())
       .then((d: { ok?: boolean }) => setDbOk(Boolean(d.ok)))
@@ -97,11 +95,7 @@ export function DemoStatusBar() {
   const readyCount = checks.filter((c) => c.ok).length;
 
   return (
-    <div
-      className="demo-status-bar border-b border-[var(--border)] bg-[var(--bg2)]"
-      role="region"
-      aria-label="Estado de la demo"
-    >
+    <div className="demo-status-bar" role="region" aria-label="Estado de la demo">
       <div className="demo-status-inner">
         <div className="flex flex-wrap items-center justify-center gap-2">
           <span
@@ -125,7 +119,7 @@ export function DemoStatusBar() {
         </div>
         <button
           type="button"
-          className="text-[10px] text-[var(--text4)] hover:text-[var(--text2)]"
+          className="demo-status-toggle"
           onClick={() => setCollapsed((v) => !v)}
           aria-expanded={!collapsed}
         >
