@@ -12,7 +12,9 @@ import {
   useVeilaEerc,
 } from "@/contexts/eerc-context";
 import { getVerifiedCounterparties } from "@/data/demo";
+import { TransferHistory } from "@/components/transfer-history";
 import { getEercContractAddress } from "@/lib/contracts";
+import { indexTransferOnServer } from "@/lib/index-transfer";
 import { shortAddress } from "@/lib/format-address";
 
 export default function TransferenciasPage() {
@@ -26,6 +28,7 @@ export default function TransferenciasPage() {
   const [reference, setReference] = useState("");
   const [busy, setBusy] = useState(false);
   const [lastTx, setLastTx] = useState<`0x${string}` | null>(null);
+  const [historyKey, setHistoryKey] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,6 +83,15 @@ export default function TransferenciasPage() {
       balance.refetchBalance();
       setLastTx(transactionHash as `0x${string}`);
       setFeedback("Transferencia enviada correctamente.");
+      setHistoryKey((k) => k + 1);
+      void indexTransferOnServer({
+        txHash: transactionHash,
+        fromAddress: address,
+        toAddress: trimmed,
+        transferType: "transfer",
+        reference: reference.trim() || undefined,
+        contractAddress: contract,
+      });
       setAmount("");
     } catch (err) {
       setError(
@@ -267,10 +279,10 @@ export default function TransferenciasPage() {
           </form>
 
           <h3 className="section-label">Historial</h3>
-          <p className="text-[12px] text-[var(--text3)]">
-            Las transacciones privadas se consultan en Snowtrace o en el panel del
-            auditor. Próximo paso: listado en UI vía indexer.
-          </p>
+          <TransferHistory
+            address={address}
+            refreshKey={historyKey}
+          />
         </div>
 
         <aside className="right" aria-label="Contrapartes y técnico">

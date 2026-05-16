@@ -1,6 +1,9 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 
+import { sql } from "drizzle-orm";
+
+import { getDb, isDatabaseConfigured } from "@/db";
 import { resolveEercContract } from "@/lib/eerc-config";
 import { getPublicEnv, isEercConfigured } from "@/lib/env";
 
@@ -15,6 +18,16 @@ export async function GET() {
   );
   const circuits = existsSync(circuitsPath);
 
+  let database = false;
+  if (isDatabaseConfigured()) {
+    try {
+      await getDb().execute(sql`SELECT 1`);
+      database = true;
+    } catch {
+      database = false;
+    }
+  }
+
   const body = {
     ok: circuits && Boolean(contract),
     chain: "avalanche-fuji",
@@ -23,6 +36,8 @@ export async function GET() {
     eercEnvConfigured: isEercConfigured(),
     eercMode: env.eercMode,
     circuits,
+    database,
+    databaseConfigured: isDatabaseConfigured(),
     timestamp: new Date().toISOString(),
   };
 

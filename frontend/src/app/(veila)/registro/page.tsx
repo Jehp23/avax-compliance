@@ -8,11 +8,12 @@ import { Feedback } from "@/components/feedback";
 import { TxLink } from "@/components/tx-link";
 import { ZkProgress } from "@/components/zk-progress";
 import { useVeilaEerc } from "@/contexts/eerc-context";
+import { indexTransferOnServer } from "@/lib/index-transfer";
 import { shortAddress } from "@/lib/format-address";
 
 export default function RegistroPage() {
   const router = useRouter();
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const { sdk, persistDecryptionKey, contractAddress } = useVeilaEerc();
 
   const [kycAccepted, setKycAccepted] = useState(false);
@@ -51,6 +52,24 @@ export default function RegistroPage() {
       setFeedback(
         `Registro exitoso · contrato ${shortAddress(contractAddress)}`,
       );
+      if (address) {
+        void indexTransferOnServer({
+          txHash: transactionHash,
+          fromAddress: address,
+          transferType: "register",
+          contractAddress,
+        });
+        void fetch("/api/institutions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            walletAddress: address,
+            name: "Institución demo",
+            initials: "IN",
+            kycStatus: "approved",
+          }),
+        });
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al registrar en eERC20.");
     } finally {

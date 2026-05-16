@@ -19,12 +19,17 @@ export function DemoStatusBar() {
   const { isConnected, chainId, address } = useAccount();
   const { sdk } = useVeilaEerc();
   const [circuitsOk, setCircuitsOk] = useState<boolean | null>(null);
+  const [dbOk, setDbOk] = useState<boolean | null>(null);
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     fetch("/circuits/RegistrationCircuit.wasm", { method: "HEAD" })
       .then((r) => setCircuitsOk(r.ok))
       .catch(() => setCircuitsOk(false));
+    fetch("/api/db/health")
+      .then((r) => r.json())
+      .then((d: { ok?: boolean }) => setDbOk(Boolean(d.ok)))
+      .catch(() => setDbOk(false));
   }, []);
 
   const contract = getEercContractAddress();
@@ -79,6 +84,12 @@ export function DemoStatusBar() {
       label: "Auditor key",
       ok: sdk.isAuditorKeySet,
       detail: sdk.isAuditorKeySet ? "on-chain" : "deploy back",
+    },
+    {
+      id: "db",
+      label: "Neon DB",
+      ok: dbOk === true,
+      detail: dbOk === null ? "…" : dbOk ? "conectada" : "sin DATABASE_URL",
     },
   ];
 
