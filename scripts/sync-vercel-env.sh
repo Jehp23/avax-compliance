@@ -34,6 +34,9 @@ keys = [
     "NEXT_PUBLIC_DEMO_FINNOVA",
     "DATABASE_URL",
     "DATABASE_URL_UNPOOLED",
+    "DEMO_TEAM_PASSPHRASE",
+    "DEMO_BANKAOOL_DECRYPTION_KEY",
+    "DEMO_FINNOVA_DECRYPTION_KEY",
 ]
 
 for key in keys:
@@ -41,7 +44,7 @@ for key in keys:
     if not val:
         print("SKIP", key)
         continue
-    sensitive = key.startswith("DATABASE")
+    sensitive = key.startswith("DATABASE") or key.startswith("DEMO_")
     cmd = [
         "vercel", "env", "add", key, "production",
         "--value", val, "-y", "--force",

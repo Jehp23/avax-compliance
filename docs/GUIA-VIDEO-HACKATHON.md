@@ -71,29 +71,23 @@ Hay dos caminos válidos; elegí **uno** y ensayalo una vez completo.
 
 ---
 
-## Camino B — Wallets ya preparadas (deployer / FinNova actuales)
+## Camino B — Wallets demo en producción (recomendado si ya están registradas)
 
-Usá esto si no querés crear wallets nuevas.
+Todo en **https://cello-avax.vercel.app** — sin localhost ni consola.
 
-### Antes de grabar (10 min, sin cámara)
+### Antes de grabar (5 min)
 
-1. Perfil **Bankaool** = `0x79d23BB592FD230e441874d0e889C58f8FD92E07`  
-2. Perfil **FinNova** = `0xC8af2C4e87C942F82BaBC4da98364C2c1A82DF32`  
-3. En **Bankaool** → `/registro` → expandir **“Ya registrado on-chain: importar clave local”**  
-4. Pegar la clave del archivo local (equipo):
+1. Confirmar deploy: https://cello-avax.vercel.app/api/demo/status → `demoUnlockConfigured: true`  
+2. Perfil **Bankaool** → MetaMask `0x79d23…` → `/registro`  
+3. Panel **“Cargar clave desde el deploy”** → código de equipo (`DEMO_TEAM_PASSPHRASE` en Vercel)  
+4. **Transferencias** → saldo ~5000 CELL  
+5. Perfil **FinNova** → mismo desbloqueo si hace falta; **auditoría** con esa wallet  
 
-   `avalanche-back/EncryptedERC/deployments/demo-keys/0x79d23bb5....json`  
-   campo numérico largo (no commitear en video).
+### En el video (15 s, en `/registro`)
 
-5. Clic **Importar clave** → “Clave cargada” → `/transferencias` debe mostrar saldo.
+> “La clave institucional vive en el servidor de demo; el operador la desbloquea con un código de equipo — equivalente a un HSM — sin pegar secretos en la consola.”
 
-6. **FinNova:** mismo panel si hace falta descifrar como receptor; para **auditoría** conectar FinNova (es auditor on-chain).
-
-### En el video (narración limpia)
-
-> “La institución ya completó el registro on-chain en un entorno seguro; en el navegador operativo importamos la clave de descifrado local — equivalente a un HSM institucional — sin exponerla en la red.”
-
-Mostrá el panel de importación en `/registro` (15–20 s), no la consola.
+Clic en **Cargar clave desde el deploy** (se ve la UI del producto, no F12).
 
 ---
 

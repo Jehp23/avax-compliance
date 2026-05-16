@@ -144,7 +144,7 @@ export default function TransferenciasPage() {
           <Feedback message={error} variant="error" />
           {sdk.isRegistered && !hasDecryptionKey ? (
             <Feedback
-              message="Falta la clave de descifrado. Andá a /registro → «Importar clave local» (demo institucional)."
+              message="Falta la clave de descifrado. En /registro usá «Cargar clave desde el deploy» con el código de equipo."
               variant="info"
             />
           ) : null}
