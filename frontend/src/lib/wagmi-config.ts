@@ -1,10 +1,10 @@
-import { cookieStorage, createConfig, createStorage, http } from "wagmi";
+import { createConfig, createStorage, http, cookieStorage } from "wagmi";
 import { avalancheFuji } from "wagmi/chains";
 import { injected } from "wagmi/connectors";
 
-const fujiRpc =
-  process.env.NEXT_PUBLIC_AVALANCHE_FUJI_RPC ??
-  "https://api.avax-test.network/ext/bc/C/rpc";
+import { getPublicEnv } from "@/lib/env";
+
+const fujiRpc = getPublicEnv().fujiRpc;
 
 export const wagmiConfig = createConfig({
   chains: [avalancheFuji],

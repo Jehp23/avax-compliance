@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Veila — Frontend
 
-## Getting Started
+App **Next.js 16** para pagos institucionales con **eERC20** (`@avalabs/eerc-sdk`) en Avalanche Fuji.
 
-First, run the development server:
+## Documentación del equipo
+
+| Doc | Contenido |
+|-----|-----------|
+| [docs/DEPLOY.md](./docs/DEPLOY.md) | Deploy Vercel, health check, checklist |
+| [docs/ENV.md](./docs/ENV.md) | Variables de entorno |
+| [../docs/DEMO.md](../docs/DEMO.md) | Guion de demo en vivo |
+| [../docs/DEPLOY.md](../docs/DEPLOY.md) | Coordinación front + back |
+| [../avalanche-back/docs/DEPLOY-EERC.md](../avalanche-back/docs/DEPLOY-EERC.md) | Deploy contratos |
+
+## Arranque rápido
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
+npm install
+npm run circuits:fetch   # si public/circuits/ está vacío
+npm run dev --webpack
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Landing: http://localhost:3000/
+- Registro: http://localhost:3000/registro
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Rutas
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Ruta | Descripción |
+|------|-------------|
+| `/` | Landing + narrativa producto |
+| `/registro` | Wallet + KYC demo + `sdk.register()` |
+| `/transferencias` | Saldo privado + `privateTransfer` |
+| `/recibir` | Dirección `0x` para pagos entrantes |
+| `/auditoria` | `sdk.auditorDecrypt()` (wallet auditor) |
+| `/api/health` | Health check para deploy |
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run dev --webpack    # desarrollo
+npm run build            # producción (webpack)
+npm run lint
+npm run circuits:fetch   # WASM/ZKEY → public/circuits/
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Barra de estado
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+En rutas `/registro`, `/transferencias`, etc. aparece la **barra de preparación demo** (wallet, Fuji, circuitos, contrato, SDK, registro, auditor key). Verde = listo para pitch.
 
-## Deploy on Vercel
+## Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Next.js App Router · TypeScript · Tailwind 4
+- wagmi 2 + viem 2 + TanStack Query
+- `@avalabs/eerc-sdk` · circuitos en `/public/circuits/`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deploy
+
+Ver [docs/DEPLOY.md](./docs/DEPLOY.md). Root Directory en Vercel: **`frontend`**.

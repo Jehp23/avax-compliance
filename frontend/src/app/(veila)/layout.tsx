@@ -1,3 +1,5 @@
+import { ConfigBanner } from "@/components/config-banner";
+import { DemoStatusBar } from "@/components/demo-status-bar";
 import { SiteHeader } from "@/components/site-header";
 
 export default function VeilaSectionLayout({
@@ -10,7 +12,9 @@ export default function VeilaSectionLayout({
       <a className="skip-link" href="#main-content">
         Ir al contenido
       </a>
+      <ConfigBanner />
       <SiteHeader />
+      <DemoStatusBar />
       {children}
     </>
   );

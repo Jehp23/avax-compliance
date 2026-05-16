@@ -9,6 +9,7 @@ import { WalletButton } from "@/components/wallet-button";
 const NAV = [
   { href: "/registro", label: "Registro" },
   { href: "/transferencias", label: "Transferencias" },
+  { href: "/recibir", label: "Recibir" },
   { href: "/auditoria", label: "Auditoría" },
 ] as const;
 
@@ -17,7 +18,7 @@ export function SiteHeader() {
 
   return (
     <header className="site-header">
-      <Link href="/registro" className="logo" aria-label="Veila — inicio">
+      <Link href="/" className="logo" aria-label="Veila — inicio">
         <LogoMark />
         Veila
       </Link>

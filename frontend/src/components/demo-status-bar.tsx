@@ -1,0 +1,126 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
+import { avalancheFuji } from "wagmi/chains";
+
+import { useVeilaEerc } from "@/contexts/eerc-context";
+import { getEercContractAddress, isEercConfigured } from "@/lib/contracts";
+import { shortAddress } from "@/lib/format-address";
+
+type Check = {
+  id: string;
+  label: string;
+  ok: boolean;
+  detail: string;
+};
+
+export function DemoStatusBar() {
+  const { isConnected, chainId, address } = useAccount();
+  const { sdk } = useVeilaEerc();
+  const [circuitsOk, setCircuitsOk] = useState<boolean | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    fetch("/circuits/RegistrationCircuit.wasm", { method: "HEAD" })
+      .then((r) => setCircuitsOk(r.ok))
+      .catch(() => setCircuitsOk(false));
+  }, []);
+
+  const contract = getEercContractAddress();
+  const customContract = isEercConfigured();
+
+  const checks: Check[] = [
+    {
+      id: "wallet",
+      label: "Wallet",
+      ok: isConnected && Boolean(address),
+      detail: address ? shortAddress(address) : "desconectada",
+    },
+    {
+      id: "fuji",
+      label: "Fuji",
+      ok: isConnected && chainId === avalancheFuji.id,
+      detail:
+        chainId === avalancheFuji.id
+          ? "43113"
+          : chainId
+            ? `red ${chainId}`
+            : "—",
+    },
+    {
+      id: "circuits",
+      label: "Circuitos ZK",
+      ok: circuitsOk === true,
+      detail: circuitsOk === null ? "…" : circuitsOk ? "ok" : "falta fetch",
+    },
+    {
+      id: "contract",
+      label: "Contrato",
+      ok: Boolean(contract),
+      detail: customContract
+        ? shortAddress(contract)
+        : `${shortAddress(contract)} (demo)`,
+    },
+    {
+      id: "sdk",
+      label: "SDK",
+      ok: sdk.isInitialized && sdk.isAllDataFetched,
+      detail: sdk.isInitialized ? "listo" : "cargando",
+    },
+    {
+      id: "register",
+      label: "Registro",
+      ok: sdk.isRegistered,
+      detail: sdk.isRegistered ? "activo" : "pendiente",
+    },
+    {
+      id: "auditor",
+      label: "Auditor key",
+      ok: sdk.isAuditorKeySet,
+      detail: sdk.isAuditorKeySet ? "on-chain" : "deploy back",
+    },
+  ];
+
+  const allOk = checks.every((c) => c.ok);
+  const readyCount = checks.filter((c) => c.ok).length;
+
+  return (
+    <div
+      className="demo-status-bar border-b border-[var(--border)] bg-[var(--bg2)]"
+      role="region"
+      aria-label="Estado de la demo"
+    >
+      <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-2 px-4 py-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={`demo-status-pill ${allOk ? "ok" : "warn"}`}
+            title={allOk ? "Listo para demo en vivo" : `${readyCount}/${checks.length} checks`}
+          >
+            {allOk ? "Demo lista" : `Preparación ${readyCount}/${checks.length}`}
+          </span>
+          {!collapsed
+            ? checks.map((c) => (
+                <span
+                  key={c.id}
+                  className={`demo-status-chip ${c.ok ? "ok" : "pending"}`}
+                  title={c.detail}
+                >
+                  <span className="demo-status-dot" aria-hidden />
+                  {c.label}
+                </span>
+              ))
+            : null}
+        </div>
+        <button
+          type="button"
+          className="text-[10px] text-[var(--text4)] hover:text-[var(--text2)]"
+          onClick={() => setCollapsed((v) => !v)}
+          aria-expanded={!collapsed}
+        >
+          {collapsed ? "Mostrar checks" : "Ocultar"}
+        </button>
+      </div>
+    </div>
+  );
+}

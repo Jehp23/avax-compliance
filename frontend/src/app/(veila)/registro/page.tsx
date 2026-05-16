@@ -4,16 +4,65 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAccount } from "wagmi";
 
+import { Feedback } from "@/components/feedback";
+import { TxLink } from "@/components/tx-link";
+import { ZkProgress } from "@/components/zk-progress";
+import { useVeilaEerc } from "@/contexts/eerc-context";
+import { shortAddress } from "@/lib/format-address";
+
 export default function RegistroPage() {
   const router = useRouter();
   const { isConnected } = useAccount();
-  const [kycDone, setKycDone] = useState(false);
+  const { sdk, persistDecryptionKey, contractAddress } = useVeilaEerc();
 
-  function simulateKyc() {
-    setKycDone(true);
-  }
+  const [kycAccepted, setKycAccepted] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [lastTx, setLastTx] = useState<`0x${string}` | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const walletDone = isConnected;
+  const kycDone = kycAccepted;
+  const registered = sdk.isRegistered;
+  const sdkReady =
+    Boolean(sdk) && sdk.isInitialized && sdk.isAllDataFetched;
+
+  async function handleRegister() {
+    setBusy(true);
+    setError(null);
+    setFeedback(null);
+    try {
+      if (!walletDone) {
+        setError("Conectá tu wallet en Avalanche Fuji.");
+        return;
+      }
+      if (!kycDone) {
+        setError("Confirmá el checklist institucional (demo KYC).");
+        return;
+      }
+      if (!sdkReady) {
+        setFeedback("Inicializando SDK eERC20…");
+        return;
+      }
+      setFeedback("Generando prueba ZK y registro on-chain…");
+      const { key, transactionHash } = await sdk.register();
+      persistDecryptionKey(key);
+      setLastTx(transactionHash as `0x${string}`);
+      setFeedback(
+        `Registro exitoso · contrato ${shortAddress(contractAddress)}`,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al registrar en eERC20.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const step3Class = registered
+    ? "done"
+    : walletDone && kycDone
+      ? "current"
+      : "";
 
   return (
     <main id="main-content">
@@ -26,18 +75,26 @@ export default function RegistroPage() {
             compliance regulatorio
           </h1>
           <p className="ob-desc">
-            Cada transferencia viaja como una “caja” con dos candados: una llave
-            para la contraparte y otra para el auditor (CNBV). El mundo ve que
-            hubo un movimiento; solo ellos pueden ver el monto. Completá los pasos
-            para habilitar tu institución.
+            Registro on-chain con BabyJubjub + ZK. La clave de descifrado se genera en tu
+            navegador. El auditor (CNBV) recibe una copia cifrada de cada monto en cada
+            transferencia.
           </p>
+
+          <Feedback message={error} variant="error" />
+          <Feedback message={feedback} variant="success" />
+          {lastTx ? (
+            <p className="mb-4 text-[12px] text-[var(--text3)]">
+              Transacción: <TxLink hash={lastTx} />
+            </p>
+          ) : null}
+          {busy ? <ZkProgress /> : null}
 
           <ol className="steps" aria-label="Pasos de onboarding">
             <li className={`step ${walletDone ? "done" : "current"}`}>
               <span className="step-num">{walletDone ? "✓" : "1"}</span>
               <div className="step-body">
                 <div className="step-name">Wallet conectada</div>
-                <div className="step-meta">MetaMask u otra wallet · Avalanche Fuji</div>
+                <div className="step-meta">MetaMask · Avalanche Fuji</div>
               </div>
               <span
                 className={`step-badge ${walletDone ? "badge-done" : "badge-current"}`}
@@ -49,12 +106,8 @@ export default function RegistroPage() {
             <li className={`step ${kycDone ? "done" : walletDone ? "current" : ""}`}>
               <span className="step-num">{kycDone ? "✓" : "2"}</span>
               <div className="step-body">
-                <div className="step-name">KYC institucional verificado</div>
-                <div className="step-meta">
-                  {kycDone
-                    ? "Demo · listo para Fuji"
-                    : "Simulación hackathon — marcá como listo cuando quieras"}
-                </div>
+                <div className="step-name">KYC institucional</div>
+                <div className="step-meta">Checklist demo · integrar API en prod.</div>
               </div>
               <span
                 className={`step-badge ${kycDone ? "badge-done" : walletDone ? "badge-current" : "badge-pending"}`}
@@ -63,74 +116,58 @@ export default function RegistroPage() {
               </span>
             </li>
 
-            <li className={`step ${walletDone && kycDone ? "current" : ""}`}>
-              <span className="step-num">3</span>
+            <li className={`step ${step3Class}`}>
+              <span className="step-num">{registered ? "✓" : "3"}</span>
               <div className="step-body">
-                <div className="step-name">Registro en protocolo eERC20</div>
+                <div className="step-name">Registro eERC20</div>
                 <div className="step-meta">
-                  Claves BabyJubjub locales + registro on-chain (tu equipo / SDK)
+                  {registered
+                    ? "Registrado en contrato"
+                    : "Generá claves + prueba ZK on-chain"}
                 </div>
               </div>
-              <span className="step-badge badge-current">siguiente</span>
+              <span
+                className={`step-badge ${registered ? "badge-done" : step3Class === "current" ? "badge-current" : "badge-pending"}`}
+              >
+                {registered ? "listo" : "pendiente"}
+              </span>
             </li>
           </ol>
 
-          {!kycDone ? (
+          <label className="mb-4 flex items-start gap-2 text-[12px] text-[var(--text3)]">
+            <input
+              type="checkbox"
+              checked={kycAccepted}
+              onChange={(e) => setKycAccepted(e.target.checked)}
+              className="mt-0.5"
+            />
+            Confirmo operar como institución autorizada (placeholder KYC hasta integrar
+            proveedor real).
+          </label>
+
+          {!registered ? (
             <button
               type="button"
-              className="mb-2 w-full rounded-lg border border-[var(--border)] bg-[var(--bg2)] px-4 py-2.5 text-[13px] font-medium transition-colors hover:bg-[var(--bg3)]"
-              onClick={simulateKyc}
+              className="primary-btn mb-2"
+              disabled={busy || !walletDone || !kycDone || !sdkReady}
+              onClick={handleRegister}
             >
-              Simular KYC aprobado (demo)
+              {busy ? "Registrando…" : "Registrar en eERC20"}
             </button>
-          ) : null}
-
-          <button
-            type="button"
-            className="primary-btn"
-            disabled={!walletDone || !kycDone}
-            onClick={() => router.push("/transferencias")}
-          >
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              aria-hidden
-            >
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-            Ir a transferencias
-          </button>
-
-          {!walletDone || !kycDone ? (
-            <p className="note !mt-3" role="note">
-              Conectá la wallet en la barra superior y, si querés, simulá el KYC
-              para desbloquear el flujo completo del MVP.
-            </p>
           ) : (
-            <div className="note" role="note">
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                aria-hidden
-                style={{ flexShrink: 0, marginTop: 1 }}
-              >
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-              Las claves se generan localmente (BabyJubjub). La clave privada no
-              sale del dispositivo; la pública queda en el contrato cuando el
-              equipo integra el SDK.
-            </div>
+            <button
+              type="button"
+              className="primary-btn"
+              onClick={() => router.push("/transferencias")}
+            >
+              Ir a transferencias
+            </button>
           )}
+
+          <div className="note" role="note">
+            Contrato: {shortAddress(contractAddress)} · clave auditor en contrato:{" "}
+            {sdk.isAuditorKeySet ? "configurada" : "pendiente (deploy back)"}
+          </div>
         </div>
       </section>
     </main>

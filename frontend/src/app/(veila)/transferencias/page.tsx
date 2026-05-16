@@ -1,65 +1,93 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
-import { isAddress } from "viem";
+import { isAddress, parseUnits } from "viem";
 import { useAccount } from "wagmi";
 
+import { Feedback } from "@/components/feedback";
+import { TxLink } from "@/components/tx-link";
+import { ZkProgress } from "@/components/zk-progress";
 import {
-  demoHistory,
-  verifiedCounterparties,
-} from "@/data/demo";
-import { getEercTokenAddress } from "@/lib/contracts";
+  useEncryptedBalanceHook,
+  useVeilaEerc,
+} from "@/contexts/eerc-context";
+import { getVerifiedCounterparties } from "@/data/demo";
+import { getEercContractAddress } from "@/lib/contracts";
 import { shortAddress } from "@/lib/format-address";
 
 export default function TransferenciasPage() {
   const { address, isConnected } = useAccount();
-  const tokenEnv = getEercTokenAddress();
+  const { sdk } = useVeilaEerc();
+  const balance = useEncryptedBalanceHook();
+  const contract = getEercContractAddress();
+
   const [destination, setDestination] = useState("");
   const [amount, setAmount] = useState("");
-  const [reference, setReference] = useState(
-    "Liquidación préstamo Q2 · Bankaool",
-  );
+  const [reference, setReference] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [lastTx, setLastTx] = useState<`0x${string}` | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  function pickCounterparty(addrShort: string, fullEth?: string) {
-    if (fullEth) setDestination(fullEth);
-    else setDestination(addrShort);
-    setFeedback(null);
+  const counterparties = getVerifiedCounterparties();
+  const decimals = balance.decimals ? Number(balance.decimals) : 18;
+  const bal = balance.parsedDecryptedBalance ?? "—";
+
+  function pickCounterparty(addr?: `0x${string}`) {
+    if (addr) {
+      setDestination(addr);
+      setError(null);
+    }
   }
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    setBusy(true);
+    setError(null);
     setFeedback(null);
 
-    if (!isConnected || !address) {
-      setFeedback("Conectá tu wallet para firmar la transferencia.");
-      return;
-    }
+    try {
+      if (!isConnected || !address) {
+        setError("Conectá tu wallet en Fuji.");
+        return;
+      }
+      if (!sdk.isRegistered) {
+        setError("Completá el registro en /registro antes de transferir.");
+        return;
+      }
+      const trimmed = destination.trim();
+      if (!isAddress(trimmed)) {
+        setError("Destino inválido: dirección 0x completa.");
+        return;
+      }
+      const { isRegistered: destOk } = await sdk.isAddressRegistered(trimmed);
+      if (!destOk) {
+        setError("El destinatario debe estar registrado en eERC20.");
+        return;
+      }
+      if (!amount.trim()) {
+        setError("Indicá un monto.");
+        return;
+      }
 
-    const trimmed = destination.trim();
-    if (!isAddress(trimmed)) {
-      setFeedback(
-        "Ingresá una dirección Ethereum válida (0x…) como destino institucional.",
+      setFeedback("Generando prueba ZK (1–2 min). No cierres la pestaña…");
+      const parsed = parseUnits(amount.trim(), decimals);
+      const { transactionHash } = await balance.privateTransfer(
+        trimmed,
+        parsed,
+        reference.trim() || undefined,
       );
-      return;
-    }
-
-    const token = tokenEnv;
-    if (!token) {
-      setFeedback(
-        "Falta NEXT_PUBLIC_EERC_TOKEN_ADDRESS en .env.local. Cuando tu equipo deploye el token/contrato eERC20, pegá la dirección y reiniciá el servidor.",
+      balance.refetchBalance();
+      setLastTx(transactionHash as `0x${string}`);
+      setFeedback("Transferencia enviada correctamente.");
+      setAmount("");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "No se pudo enviar la transferencia.",
       );
-      return;
+    } finally {
+      setBusy(false);
     }
-
-    if (!amount.trim()) {
-      setFeedback("Indicá un monto.");
-      return;
-    }
-
-    setFeedback(
-      `Listo para integrar SDK: destino ${shortAddress(trimmed)}, monto ${amount.trim()} MXN (referencia registrada). El siguiente paso es llamar a @avalabs/eerc-sdk desde este handler.`,
-    );
   }
 
   return (
@@ -68,9 +96,9 @@ export default function TransferenciasPage() {
         <aside aria-label="Resumen y navegación">
           <div className="bal-block">
             <div className="bal-label">SALDO DESCIFRADO (LOCAL)</div>
-            <div className="bal-val">—</div>
+            <div className="bal-val">{bal}</div>
             <div className="bal-currency">
-              Pendiente de SDK · ejemplo demo $842,500 MXN
+              {sdk.symbol || "eERC"} · contrato {shortAddress(contract)}
             </div>
             <div className="bal-enc">
               <span className="enc-dot" aria-hidden />
@@ -81,6 +109,7 @@ export default function TransferenciasPage() {
           <div className="aside-sect">
             <div className="aside-label">MENÚ</div>
             <nav aria-label="Acciones">
+              
               <div className="aside-item active">
                 <span className="aside-icon" aria-hidden>
                   ⇄
@@ -121,9 +150,9 @@ export default function TransferenciasPage() {
               <span className="stat-val">{address ? shortAddress(address) : "—"}</span>
             </div>
             <div className="stat-row">
-              <span className="stat-key">Contrato eERC</span>
-              <span className={`stat-val ${tokenEnv ? "ok" : "warn"}`}>
-                {tokenEnv ? "configurado" : "falta .env"}
+              <span className="stat-key">Registro eERC</span>
+              <span className={`stat-val ${sdk.isRegistered ? "ok" : "warn"}`}>
+                {sdk.isRegistered ? "activo" : "pendiente"}
               </span>
             </div>
             <div className="stat-row">
@@ -139,7 +168,7 @@ export default function TransferenciasPage() {
               <h2 className="main-title">Nueva transferencia</h2>
               <p className="main-sub">
                 Montos cifrados para el público · copia auditada para el regulador
-                · ZK proof al integrar el SDK
+                · ZK proof vía @avalabs/eerc-sdk
               </p>
             </div>
             <div className="enc-status">
@@ -148,14 +177,14 @@ export default function TransferenciasPage() {
             </div>
           </div>
 
-          {feedback ? (
-            <div
-              className="mb-4 rounded-lg border border-[var(--border)] bg-[var(--bg2)] px-3 py-2 text-[12px] leading-relaxed text-[var(--text2)]"
-              role="status"
-            >
-              {feedback}
-            </div>
+          <Feedback message={error} variant="error" />
+          <Feedback message={feedback} variant="success" />
+          {lastTx ? (
+            <p className="mb-4 text-[12px] text-[var(--text3)]">
+              Transacción: <TxLink hash={lastTx} />
+            </p>
           ) : null}
+          {busy ? <ZkProgress /> : null}
 
           <form className="form-card" onSubmit={onSubmit}>
             <div className="form-card-head">
@@ -191,7 +220,7 @@ export default function TransferenciasPage() {
                     aria-describedby="amount-hint"
                   />
                   <span className="currency-sel" aria-hidden>
-                    MXN
+                    {sdk.symbol || "TOKEN"}
                   </span>
                   <span className="priv-flag">
                     <span className="enc-dot" aria-hidden />
@@ -215,7 +244,11 @@ export default function TransferenciasPage() {
               </div>
             </div>
             <div className="form-footer">
-              <button type="submit" className="submit-btn">
+              <button
+                type="submit"
+                className="submit-btn"
+                disabled={busy || !sdk.isRegistered}
+              >
                 <svg
                   width="13"
                   height="13"
@@ -228,66 +261,38 @@ export default function TransferenciasPage() {
                   <line x1="22" y1="2" x2="11" y2="13" />
                   <polygon points="22 2 15 22 11 13 2 9 22 2" />
                 </svg>
-                Preparar envío (ZK / SDK)
+                {busy ? "Enviando…" : "Transferir (ZK privado)"}
               </button>
             </div>
           </form>
 
-          <h3 className="section-label">Historial (demo)</h3>
-          <div className="tx-table" role="region" aria-label="Historial de ejemplo">
-            <div className="tx-head">
-              <div>DESTINO</div>
-              <div>MONTO</div>
-              <div>ESTADO</div>
-              <div>FECHA</div>
-            </div>
-            {demoHistory.map((tx, i) => (
-              <div key={i} className="tx-row">
-                <div className="tx-ent">
-                  <div className="tx-ico" aria-hidden>
-                    {tx.direction === "out" ? "→" : "←"}
-                  </div>
-                  <div>
-                    <div className="tx-to">{tx.counterparty}</div>
-                    <div className="tx-hash-sm">{tx.hashShort}</div>
-                  </div>
-                </div>
-                <div>
-                  <div
-                    className={`tx-amt ${tx.direction === "out" ? "out" : "in"}`}
-                  >
-                    {tx.amountLabel}
-                  </div>
-                </div>
-                <div>
-                  <span className="zk-tag">
-                    <span className="enc-dot" aria-hidden />
-                    ZK válido
-                  </span>
-                </div>
-                <div className="tx-time-sm">{tx.timeLabel}</div>
-              </div>
-            ))}
-          </div>
+          <h3 className="section-label">Historial</h3>
+          <p className="text-[12px] text-[var(--text3)]">
+            Las transacciones privadas se consultan en Snowtrace o en el panel del
+            auditor. Próximo paso: listado en UI vía indexer.
+          </p>
         </div>
 
         <aside className="right" aria-label="Contrapartes y técnico">
           <div>
             <div className="r-title">Instituciones verificadas</div>
             <div className="cp-list">
-              {verifiedCounterparties.map((cp) => (
+              {counterparties.map((cp) => (
                 <button
                   key={cp.addrShort}
                   type="button"
                   className="cp"
-                  onClick={() => pickCounterparty(cp.addrShort)}
+                  disabled={!cp.address}
+                  onClick={() => pickCounterparty(cp.address)}
                 >
                   <span className="cp-av" aria-hidden>
                     {cp.initials}
                   </span>
                   <span className="cp-body">
                     <span className="cp-name">{cp.name}</span>
-                    <span className="cp-addr">{cp.addrShort}</span>
+                    <span className="cp-addr">
+                      {cp.address ? shortAddress(cp.address) : "sin .env"}
+                    </span>
                   </span>
                   <span
                     className="kyc-dot"
@@ -300,11 +305,11 @@ export default function TransferenciasPage() {
           </div>
 
           <div>
-            <div className="r-title">ZK Proof · última tx</div>
+            <div className="r-title">ZK Proof · protocolo</div>
             <div className="proof-block">
               <div className="proof-head">
                 <span className="enc-dot" aria-hidden />
-                metadata esperada del SDK
+                eERC20 · Avalanche Fuji
               </div>
               <div className="proof-body">
                 <div>
@@ -313,14 +318,15 @@ export default function TransferenciasPage() {
                 <div>
                   cifrado <span className="proof-val">ElGamal</span>
                 </div>
+                
                 <div>
                   auditor <span className="proof-val">CNBV</span>
                 </div>
                 <div>
-                  bloque <span className="proof-val">—</span>
+                  contrato <span className="proof-val">{shortAddress(contract)}</span>
                 </div>
                 <div>
-                  válido <span className="proof-ok">pendiente de tx real</span>
+                  válido <span className="proof-ok">on-chain tras tx</span>
                 </div>
               </div>
             </div>

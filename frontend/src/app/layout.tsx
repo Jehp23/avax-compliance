@@ -19,9 +19,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Veila · Pagos eERC20 + auditoría",
+  title: "Veila · Pagos eERC20 + auditoría CNBV",
   description:
-    "Pagos institucionales privados en Avalanche con eERC20 y compliance regulatorio nativo.",
+    "Pagos institucionales privados en Avalanche Fuji con EncryptedERC (eERC20), ZK y panel regulatorio.",
+  openGraph: {
+    title: "Veila · eERC20 en Avalanche",
+    description:
+      "Privados para el sistema financiero · auditables para el regulador. Hackathon Avalanche LatAm.",
+    type: "website",
+    locale: "es_MX",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Veila · eERC20 + compliance",
+    description: "Pagos institucionales privados con auditoría nativa en Avalanche.",
+  },
 };
 
 export default async function RootLayout({

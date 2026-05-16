@@ -1,8 +1,15 @@
-/**
- * Direcciones públicas tras deploy Fuji — las completa tu equipo en `.env.local`.
- */
-export function getEercTokenAddress(): `0x${string}` | undefined {
-  const raw = process.env.NEXT_PUBLIC_EERC_TOKEN_ADDRESS;
-  if (!raw || !raw.startsWith("0x") || raw.length < 42) return undefined;
-  return raw as `0x${string}`;
+import { getPublicEnv, isEercConfigured } from "@/lib/env";
+import {
+  resolveConverterToken,
+  resolveEercContract,
+} from "@/lib/eerc-config";
+
+export function getEercContractAddress(): `0x${string}` {
+  return resolveEercContract(getPublicEnv());
 }
+
+export function getConverterTokenAddress(): `0x${string}` | undefined {
+  return resolveConverterToken(getPublicEnv());
+}
+
+export { isEercConfigured, getPublicEnv };
