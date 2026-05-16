@@ -24,6 +24,10 @@ export function saveDecryptionKey(key: string): void {
   }
 }
 
+export function hasDecryptionKey(): boolean {
+  return Boolean(loadDecryptionKey());
+}
+
 export function clearDecryptionKey(): void {
   if (typeof window === "undefined") return;
   try {

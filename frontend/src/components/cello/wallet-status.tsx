@@ -8,7 +8,7 @@ import { shortAddress } from "@/lib/format-address";
 
 export function WalletStatus() {
   const { address, isConnected, chainId } = useAccount();
-  const { sdk } = useCelloEerc();
+  const { sdk, hasDecryptionKey } = useCelloEerc();
 
   const rows = [
     {
@@ -30,6 +30,11 @@ export function WalletStatus() {
       key: "eERC",
       value: sdk.isRegistered ? "registrado" : "pendiente",
       ok: sdk.isRegistered,
+    },
+    {
+      key: "Clave ZK",
+      value: hasDecryptionKey ? "en sesión" : "falta",
+      ok: hasDecryptionKey,
     },
   ];
 

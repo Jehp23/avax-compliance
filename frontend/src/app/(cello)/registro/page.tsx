@@ -7,6 +7,7 @@ import { useAccount } from "wagmi";
 import { Feedback } from "@/components/feedback";
 import { TxLink } from "@/components/tx-link";
 import { PageHeader } from "@/components/cello/page-header";
+import { ImportDemoKey } from "@/components/cello/import-demo-key";
 import { PageShell } from "@/components/cello/page-shell";
 import { ZkProgress } from "@/components/zk-progress";
 import { useCelloEerc } from "@/contexts/eerc-context";
@@ -16,7 +17,8 @@ import { shortAddress } from "@/lib/format-address";
 export default function RegistroPage() {
   const router = useRouter();
   const { isConnected, address } = useAccount();
-  const { sdk, persistDecryptionKey, contractAddress } = useCelloEerc();
+  const { sdk, persistDecryptionKey, contractAddress, hasDecryptionKey } =
+    useCelloEerc();
 
   const [kycAccepted, setKycAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -172,11 +174,16 @@ export default function RegistroPage() {
         <button
           type="button"
           className="primary-btn"
+          disabled={!hasDecryptionKey}
           onClick={() => router.push("/transferencias")}
         >
-          Ir a transferencias
+          {hasDecryptionKey
+            ? "Ir a transferencias"
+            : "Importá la clave local primero"}
         </button>
       )}
+
+      <ImportDemoKey />
 
       <div className="note" role="note">
         Contrato {shortAddress(contractAddress)} · auditor{" "}

@@ -19,12 +19,14 @@ import {
 } from "@/contexts/eerc-context";
 import { getVerifiedCounterparties } from "@/data/demo";
 import { getEercContractAddress } from "@/lib/contracts";
+import { loadDecryptionKey } from "@/lib/decryption-key-storage";
+import { formatTransferError } from "@/lib/format-transfer-error";
 import { indexTransferOnServer } from "@/lib/index-transfer";
 import { shortAddress } from "@/lib/format-address";
 
 export default function TransferenciasPage() {
   const { address, isConnected } = useAccount();
-  const { sdk } = useCelloEerc();
+  const { sdk, hasDecryptionKey, persistDecryptionKey } = useCelloEerc();
   const balance = useEncryptedBalanceHook();
   const contract = getEercContractAddress();
 
@@ -63,6 +65,18 @@ export default function TransferenciasPage() {
         setError("Completá el registro en /registro antes de transferir.");
         return;
       }
+      const storedKey = loadDecryptionKey();
+      if (!storedKey) {
+        setError(
+          "Falta la clave de descifrado. Pegá cello-eerc-decryption-key en consola (FASES-DEMO.md) y recargá, o completá /registro con esta wallet.",
+        );
+        return;
+      }
+      if (!hasDecryptionKey) {
+        persistDecryptionKey(storedKey);
+        setFeedback("Clave de descifrado cargada. Pulsá Transferir de nuevo.");
+        return;
+      }
       const trimmed = destination.trim();
       if (!isAddress(trimmed)) {
         setError("Destino inválido: dirección 0x completa.");
@@ -99,9 +113,7 @@ export default function TransferenciasPage() {
       });
       setAmount("");
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "No se pudo enviar la transferencia.",
-      );
+      setError(formatTransferError(err));
     } finally {
       setBusy(false);
     }
@@ -130,6 +142,12 @@ export default function TransferenciasPage() {
           />
 
           <Feedback message={error} variant="error" />
+          {sdk.isRegistered && !hasDecryptionKey ? (
+            <Feedback
+              message="Falta la clave de descifrado. Andá a /registro → «Importar clave local» (demo institucional)."
+              variant="info"
+            />
+          ) : null}
           <Feedback
             message={feedback}
             variant={

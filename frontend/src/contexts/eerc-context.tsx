@@ -7,8 +7,11 @@ import {
 } from "@avalabs/eerc-sdk";
 import {
   createContext,
+  useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useState,
   type ReactNode,
 } from "react";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
@@ -20,7 +23,10 @@ import {
   resolveEercContract,
 } from "@/lib/eerc-config";
 import { getPublicEnv } from "@/lib/env";
-import { loadDecryptionKey, saveDecryptionKey } from "@/lib/decryption-key-storage";
+import {
+  loadDecryptionKey,
+  saveDecryptionKey,
+} from "@/lib/decryption-key-storage";
 
 type EercSdk = ReturnType<typeof useEERC>;
 
@@ -29,7 +35,9 @@ type EercContextValue = {
   env: ReturnType<typeof getPublicEnv>;
   sdk: EercSdk;
   walletConnected: boolean;
+  hasDecryptionKey: boolean;
   persistDecryptionKey: (key: string) => void;
+  refreshDecryptionKey: () => void;
 };
 
 const EercContext = createContext<EercContextValue | null>(null);
@@ -40,14 +48,39 @@ export function EercProvider({ children }: { children: ReactNode }) {
   const { isConnected } = useAccount();
   const publicClient = usePublicClient({ chainId: avalancheFuji.id });
   const { data: walletClient } = useWalletClient();
-  const storedKey = useMemo(() => loadDecryptionKey(), []);
+
+  const [decryptionKey, setDecryptionKey] = useState<string | undefined>(
+    undefined,
+  );
+
+  useEffect(() => {
+    setDecryptionKey(loadDecryptionKey());
+  }, []);
+
+  useEffect(() => {
+    const sync = () => {
+      const stored = loadDecryptionKey();
+      if (stored) setDecryptionKey(stored);
+    };
+    window.addEventListener("focus", sync);
+    return () => window.removeEventListener("focus", sync);
+  }, []);
+
+  const persistDecryptionKey = useCallback((key: string) => {
+    saveDecryptionKey(key);
+    setDecryptionKey(key);
+  }, []);
+
+  const refreshDecryptionKey = useCallback(() => {
+    setDecryptionKey(loadDecryptionKey());
+  }, []);
 
   const sdk = useEERC(
     publicClient as CompatiblePublicClient,
     (walletClient ?? publicClient) as CompatibleWalletClient,
     contractAddress,
     CIRCUIT_CONFIG,
-    storedKey,
+    decryptionKey,
   );
 
   const value = useMemo<EercContextValue>(
@@ -56,9 +89,19 @@ export function EercProvider({ children }: { children: ReactNode }) {
       env,
       sdk,
       walletConnected: isConnected,
-      persistDecryptionKey: saveDecryptionKey,
+      hasDecryptionKey: Boolean(decryptionKey),
+      persistDecryptionKey,
+      refreshDecryptionKey,
     }),
-    [contractAddress, env, sdk, isConnected],
+    [
+      contractAddress,
+      env,
+      sdk,
+      isConnected,
+      decryptionKey,
+      persistDecryptionKey,
+      refreshDecryptionKey,
+    ],
   );
 
   return (
