@@ -60,7 +60,7 @@ export default function AuditoriaPage() {
       }
       if (!sdk.isAuditorKeySet) {
         setError(
-          "La clave pública del auditor no está configurada en el contrato. El deploy debe llamar setContractAuditorPublicKey.",
+          "La clave pública del auditor no está configurada en el contrato (setAuditorPublicKey en Fuji).",
         );
         return;
       }

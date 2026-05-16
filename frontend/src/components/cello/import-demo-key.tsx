@@ -48,7 +48,8 @@ export function ImportDemoKey() {
       }
       persistDecryptionKey(data.decryptionKey);
       setPassphrase("");
-      setMsg("Clave cargada desde el deploy. Andá a Transferencias.");
+      setOpen(false);
+      setMsg("Clave cargada. Podés ir a Transferencias.");
     } catch {
       setMsg("Error de red al contactar el servidor de demo.");
     } finally {

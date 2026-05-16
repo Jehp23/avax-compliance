@@ -42,38 +42,27 @@ type EercContextValue = {
 
 const EercContext = createContext<EercContextValue | null>(null);
 
-export function EercProvider({ children }: { children: ReactNode }) {
-  const env = useMemo(() => getPublicEnv(), []);
-  const contractAddress = useMemo(() => resolveEercContract(env), [env]);
-  const { isConnected } = useAccount();
+type SdkRuntimeProps = {
+  decryptionKey: string | undefined;
+  contractAddress: `0x${string}`;
+  env: ReturnType<typeof getPublicEnv>;
+  isConnected: boolean;
+  persistDecryptionKey: (key: string) => void;
+  refreshDecryptionKey: () => void;
+  children: ReactNode;
+};
+
+function EercSdkRuntime({
+  decryptionKey,
+  contractAddress,
+  env,
+  isConnected,
+  persistDecryptionKey,
+  refreshDecryptionKey,
+  children,
+}: SdkRuntimeProps) {
   const publicClient = usePublicClient({ chainId: avalancheFuji.id });
   const { data: walletClient } = useWalletClient();
-
-  const [decryptionKey, setDecryptionKey] = useState<string | undefined>(
-    undefined,
-  );
-
-  useEffect(() => {
-    setDecryptionKey(loadDecryptionKey());
-  }, []);
-
-  useEffect(() => {
-    const sync = () => {
-      const stored = loadDecryptionKey();
-      if (stored) setDecryptionKey(stored);
-    };
-    window.addEventListener("focus", sync);
-    return () => window.removeEventListener("focus", sync);
-  }, []);
-
-  const persistDecryptionKey = useCallback((key: string) => {
-    saveDecryptionKey(key);
-    setDecryptionKey(key);
-  }, []);
-
-  const refreshDecryptionKey = useCallback(() => {
-    setDecryptionKey(loadDecryptionKey());
-  }, []);
 
   const sdk = useEERC(
     publicClient as CompatiblePublicClient,
@@ -104,8 +93,48 @@ export function EercProvider({ children }: { children: ReactNode }) {
     ],
   );
 
+  return <EercContext.Provider value={value}>{children}</EercContext.Provider>;
+}
+
+export function EercProvider({ children }: { children: ReactNode }) {
+  const env = useMemo(() => getPublicEnv(), []);
+  const contractAddress = useMemo(() => resolveEercContract(env), [env]);
+  const { isConnected } = useAccount();
+
+  const [decryptionKey, setDecryptionKey] = useState<string | undefined>(() =>
+    typeof window === "undefined" ? undefined : loadDecryptionKey(),
+  );
+
+  useEffect(() => {
+    const sync = () => {
+      const stored = loadDecryptionKey();
+      if (stored) setDecryptionKey(stored);
+    };
+    window.addEventListener("focus", sync);
+    return () => window.removeEventListener("focus", sync);
+  }, []);
+
+  const persistDecryptionKey = useCallback((key: string) => {
+    saveDecryptionKey(key);
+    setDecryptionKey(key);
+  }, []);
+
+  const refreshDecryptionKey = useCallback(() => {
+    setDecryptionKey(loadDecryptionKey());
+  }, []);
+
   return (
-    <EercContext.Provider value={value}>{children}</EercContext.Provider>
+    <EercSdkRuntime
+      key={decryptionKey ?? "__no-key__"}
+      decryptionKey={decryptionKey}
+      contractAddress={contractAddress}
+      env={env}
+      isConnected={isConnected}
+      persistDecryptionKey={persistDecryptionKey}
+      refreshDecryptionKey={refreshDecryptionKey}
+    >
+      {children}
+    </EercSdkRuntime>
   );
 }
 
