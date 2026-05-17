@@ -6,14 +6,23 @@ import { type State, WagmiProvider } from "wagmi";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { EercProvider } from "@/contexts/eerc-context";
-import { wagmiConfig } from "@/lib/wagmi-config";
+import { createWagmiConfig } from "@/lib/wagmi-config";
 
 type ProvidersProps = {
   children: ReactNode;
+  appOrigin: string;
+  fujiTransportRpcUrl: string;
   initialState?: State;
 };
 
-export function Providers({ children, initialState }: ProvidersProps) {
+export function Providers({
+  children,
+  appOrigin,
+  fujiTransportRpcUrl,
+  initialState,
+}: ProvidersProps) {
+  const [wagmiConfig] = useState(() => createWagmiConfig(fujiTransportRpcUrl));
+
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -30,7 +39,7 @@ export function Providers({ children, initialState }: ProvidersProps) {
     <WagmiProvider config={wagmiConfig} initialState={initialState}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <EercProvider>{children}</EercProvider>
+          <EercProvider appOrigin={appOrigin}>{children}</EercProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </WagmiProvider>

@@ -36,6 +36,45 @@ export const CIRCUIT_CONFIG = {
   },
 } as const;
 
+export type CircuitUrlsConfig = {
+  [K in keyof typeof CIRCUIT_CONFIG]: {
+    wasm: string;
+    zkey: string;
+  };
+};
+
+/** URLs absolutas para el SDK (evita Failed to fetch con rutas relativas en Next). */
+export function circuitUrlsWithAppOrigin(appOrigin: string): CircuitUrlsConfig {
+  const base = appOrigin.replace(/\/$/, "");
+  const abs = (path: string) =>
+    path.startsWith("http://") || path.startsWith("https://")
+      ? path
+      : `${base}${path.startsWith("/") ? path : `/${path}`}`;
+
+  return {
+    register: {
+      wasm: abs(CIRCUIT_CONFIG.register.wasm),
+      zkey: abs(CIRCUIT_CONFIG.register.zkey),
+    },
+    mint: {
+      wasm: abs(CIRCUIT_CONFIG.mint.wasm),
+      zkey: abs(CIRCUIT_CONFIG.mint.zkey),
+    },
+    transfer: {
+      wasm: abs(CIRCUIT_CONFIG.transfer.wasm),
+      zkey: abs(CIRCUIT_CONFIG.transfer.zkey),
+    },
+    withdraw: {
+      wasm: abs(CIRCUIT_CONFIG.withdraw.wasm),
+      zkey: abs(CIRCUIT_CONFIG.withdraw.zkey),
+    },
+    burn: {
+      wasm: abs(CIRCUIT_CONFIG.burn.wasm),
+      zkey: abs(CIRCUIT_CONFIG.burn.zkey),
+    },
+  };
+}
+
 export function resolveEercContract(env: CelloPublicEnv): `0x${string}` {
   if (env.eercContract) return env.eercContract;
   return env.eercMode === "converter"

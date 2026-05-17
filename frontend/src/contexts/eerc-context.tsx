@@ -10,6 +10,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -18,7 +19,7 @@ import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import { avalancheFuji } from "wagmi/chains";
 
 import {
-  CIRCUIT_CONFIG,
+  circuitUrlsWithAppOrigin,
   resolveConverterToken,
   resolveEercContract,
 } from "@/lib/eerc-config";
@@ -43,6 +44,8 @@ type EercContextValue = {
 const EercContext = createContext<EercContextValue | null>(null);
 
 type SdkRuntimeProps = {
+  appOrigin: string;
+  circuitOrigin: string;
   decryptionKey: string | undefined;
   contractAddress: `0x${string}`;
   env: ReturnType<typeof getPublicEnv>;
@@ -53,6 +56,8 @@ type SdkRuntimeProps = {
 };
 
 function EercSdkRuntime({
+  appOrigin,
+  circuitOrigin,
   decryptionKey,
   contractAddress,
   env,
@@ -64,11 +69,16 @@ function EercSdkRuntime({
   const publicClient = usePublicClient({ chainId: avalancheFuji.id });
   const { data: walletClient } = useWalletClient();
 
+  const circuitUrls = useMemo(
+    () => circuitUrlsWithAppOrigin(circuitOrigin),
+    [circuitOrigin],
+  );
+
   const sdk = useEERC(
     publicClient as CompatiblePublicClient,
     (walletClient ?? publicClient) as CompatibleWalletClient,
     contractAddress,
-    CIRCUIT_CONFIG,
+    circuitUrls,
     decryptionKey,
   );
 
@@ -96,10 +106,22 @@ function EercSdkRuntime({
   return <EercContext.Provider value={value}>{children}</EercContext.Provider>;
 }
 
-export function EercProvider({ children }: { children: ReactNode }) {
+export function EercProvider({
+  children,
+  appOrigin,
+}: {
+  children: ReactNode;
+  appOrigin: string;
+}) {
   const env = useMemo(() => getPublicEnv(), []);
   const contractAddress = useMemo(() => resolveEercContract(env), [env]);
   const { isConnected } = useAccount();
+
+  const [circuitOrigin, setCircuitOrigin] = useState(appOrigin);
+  useLayoutEffect(() => {
+    const live = window.location.origin;
+    setCircuitOrigin(live !== appOrigin ? live : appOrigin);
+  }, [appOrigin]);
 
   const [decryptionKey, setDecryptionKey] = useState<string | undefined>(() =>
     typeof window === "undefined" ? undefined : loadDecryptionKey(),
@@ -126,6 +148,8 @@ export function EercProvider({ children }: { children: ReactNode }) {
   return (
     <EercSdkRuntime
       key={decryptionKey ?? "__no-key__"}
+      appOrigin={appOrigin}
+      circuitOrigin={circuitOrigin}
       decryptionKey={decryptionKey}
       contractAddress={contractAddress}
       env={env}

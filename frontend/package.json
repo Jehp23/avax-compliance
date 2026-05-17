@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "circuits:fetch": "bash scripts/fetch-circuits.sh",
+    "check:eerc": "node scripts/check-eerc-fuji.mjs",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "postinstall": "node -e \"const fs=require('fs');if(!fs.existsSync('public/circuits/RegistrationCircuit.wasm')){console.log('Run: npm run circuits:fetch')}\""

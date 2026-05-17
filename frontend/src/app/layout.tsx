@@ -4,7 +4,9 @@ import { headers } from "next/headers";
 import { cookieToInitialState } from "wagmi";
 
 import { Providers } from "@/components/providers";
-import { wagmiConfig } from "@/lib/wagmi-config";
+import { getPublicEnv } from "@/lib/env";
+import { getRequestOrigin } from "@/lib/request-origin";
+import { createWagmiConfig } from "@/lib/wagmi-config";
 
 import "./globals.css";
 
@@ -41,8 +43,15 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieHeader = (await headers()).get("cookie") ?? "";
-  const initialState = cookieToInitialState(wagmiConfig, cookieHeader);
+  const headersList = await headers();
+  const cookieHeader = headersList.get("cookie") ?? "";
+  const appOrigin = getRequestOrigin(headersList);
+  const useDirectRpc = process.env.NEXT_PUBLIC_FUJI_RPC_DIRECT === "1";
+  const fujiTransportRpcUrl = useDirectRpc
+    ? getPublicEnv().fujiRpc
+    : `${appOrigin}/api/rpc/fuji`;
+  const wagmiConfigForCookie = createWagmiConfig(fujiTransportRpcUrl);
+  const initialState = cookieToInitialState(wagmiConfigForCookie, cookieHeader);
 
   return (
     <html
@@ -58,7 +67,13 @@ export default async function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-[var(--bg)] text-[var(--text)]">
-        <Providers initialState={initialState}>{children}</Providers>
+        <Providers
+          appOrigin={appOrigin}
+          fujiTransportRpcUrl={fujiTransportRpcUrl}
+          initialState={initialState}
+        >
+          {children}
+        </Providers>
       </body>
     </html>
   );
