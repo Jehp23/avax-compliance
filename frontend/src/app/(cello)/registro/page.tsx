@@ -23,6 +23,7 @@ import {
 import { formatTransferError } from "@/lib/format-transfer-error";
 import { ImportDemoKey } from "@/components/cello/import-demo-key";
 import { RestoreZkKey } from "@/components/cello/restore-zk-key";
+import { SessionBackupCard } from "@/components/cello/session-backup-card";
 import { useMounted } from "@/hooks/use-mounted";
 
 export default function RegistroPage() {
@@ -47,6 +48,7 @@ export default function RegistroPage() {
   const [lastTx, setLastTx] = useState<`0x${string}` | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [promptSessionBackup, setPromptSessionBackup] = useState(false);
 
   const avaxMode = isAvaxPaymentMode();
   const walletDone = isConnected;
@@ -199,8 +201,9 @@ export default function RegistroPage() {
         transferType: "register",
         contractAddress: getEercContractAddress(),
       });
+      setPromptSessionBackup(true);
       setFeedback(
-        `Registro eERC exitoso. Sesión guardada en este navegador · ${shortAddress(contractAddress)}`,
+        `Registro eERC exitoso. Descargá el JSON de respaldo antes de cerrar el navegador · ${shortAddress(contractAddress)}`,
       );
     } catch (e) {
       setError(formatTransferError(e));
@@ -338,6 +341,9 @@ export default function RegistroPage() {
               <RestoreZkKey />
             </>
           ) : null}
+          {!avaxMode && registered && hasDecryptionKey ? (
+            <SessionBackupCard highlightDownload={promptSessionBackup} />
+          ) : null}
           <button
             type="button"
             className="primary-btn"
@@ -354,7 +360,7 @@ export default function RegistroPage() {
       <div className="note mt-4" role="note">
         {avaxMode
           ? "Pagos en AVAX nativo (Fuji testnet). Necesitás AVAX para gas y monto."
-          : `Contrato eERC ${shortAddress(contractAddress)}. La sesión (clave ZK + institución) se guarda en sessionStorage como JSON en este navegador.`}
+          : `Contrato eERC ${shortAddress(contractAddress)}. Tras registrar, descargá el JSON de sesión como respaldo de tu clave ZK.`}
       </div>
     </PageShell>
   );

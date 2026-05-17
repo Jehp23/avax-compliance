@@ -150,6 +150,50 @@ export function applyCelloSessionFromConsole(
   }
 }
 
+export function sessionToExport(session: CelloSession): string {
+  return JSON.stringify(session, null, 2);
+}
+
+export function parseCelloSessionFile(text: string): CelloSessionInput {
+  const parsed = JSON.parse(text) as CelloSession;
+  if (
+    parsed?.v !== 1 ||
+    !parsed.walletAddress ||
+    !parsed.contractAddress ||
+    !parsed.decryptionKey
+  ) {
+    throw new Error("Archivo de sesión inválido");
+  }
+  return {
+    walletAddress: parsed.walletAddress,
+    contractAddress: parsed.contractAddress,
+    decryptionKey: parsed.decryptionKey,
+    registerTxHash: parsed.registerTxHash,
+    institution: parsed.institution,
+  };
+}
+
+/** Descarga respaldo JSON (clave ZK + contexto). */
+export function downloadCelloSessionFile(session?: CelloSession | null): boolean {
+  if (typeof window === "undefined") return false;
+  const data = session ?? loadCelloSession();
+  if (!data) return false;
+
+  const blob = new Blob([sessionToExport(data)], {
+    type: "application/json;charset=utf-8",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `cello-session-${data.walletAddress.slice(2, 10)}.json`;
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  return true;
+}
+
 export function loadSessionDecryptionKey(
   wallet?: string,
   contract?: string,

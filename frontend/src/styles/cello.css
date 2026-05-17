@@ -1762,6 +1762,23 @@ aside {
   margin-bottom: 4px;
 }
 
+.panel--highlight {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 1px var(--ink);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .cp-empty {
   padding: 10px 12px;
   border: 1px dashed var(--border);
