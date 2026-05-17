@@ -28,6 +28,17 @@ export function isDemoUnlockConfigured(): boolean {
   );
 }
 
+/** Sin código en UI: desbloqueo automático para wallets demo (testnet). */
+export function isDemoAutoUnlockEnabled(): boolean {
+  if (
+    process.env.DEMO_AUTO_UNLOCK === "0" ||
+    process.env.DEMO_AUTO_UNLOCK === "false"
+  ) {
+    return false;
+  }
+  return isDemoUnlockConfigured();
+}
+
 export function resolveDemoRole(
   walletAddress: string,
 ): DemoRole | null {

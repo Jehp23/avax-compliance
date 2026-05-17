@@ -11,6 +11,7 @@ import { ImportDemoKey } from "@/components/cello/import-demo-key";
 import { PageShell } from "@/components/cello/page-shell";
 import { ZkProgress } from "@/components/zk-progress";
 import { useCelloEerc } from "@/contexts/eerc-context";
+import { isDemoWalletAddress } from "@/lib/demo-client";
 import { indexTransferOnServer } from "@/lib/index-transfer";
 import { shortAddress } from "@/lib/format-address";
 
@@ -179,7 +180,9 @@ export default function RegistroPage() {
         >
           {hasDecryptionKey
             ? "Ir a transferencias"
-            : "Importá la clave local primero"}
+            : isDemoWalletAddress(address)
+              ? "Sincronizando credenciales…"
+              : "Completá el registro ZK primero"}
         </button>
       )}
 

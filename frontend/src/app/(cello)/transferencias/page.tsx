@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { type FormEvent, useState } from "react";
-import { isAddress, parseUnits } from "viem";
+import { formatUnits, isAddress, parseUnits } from "viem";
 import { useAccount } from "wagmi";
 
 import { Feedback } from "@/components/feedback";
@@ -41,7 +41,11 @@ export default function TransferenciasPage() {
 
   const counterparties = getVerifiedCounterparties();
   const decimals = balance.decimals ? Number(balance.decimals) : 18;
-  const bal = balance.parsedDecryptedBalance ?? "—";
+  const decrypted = balance.decryptedBalance ?? 0n;
+  const bal =
+    hasDecryptionKey && sdk.isRegistered
+      ? formatUnits(decrypted, decimals)
+      : "—";
 
   function pickCounterparty(addr?: `0x${string}`) {
     if (addr) {
@@ -67,7 +71,7 @@ export default function TransferenciasPage() {
       }
       if (!loadDecryptionKey() && !hasDecryptionKey) {
         setError(
-          "Falta la clave de descifrado. En /registro usá «Cargar clave desde el deploy» o completá el registro ZK con esta wallet.",
+          "Falta la clave de descifrado. En /registro completá el onboarding o conectá una wallet institucional demo.",
         );
         return;
       }
@@ -90,8 +94,35 @@ export default function TransferenciasPage() {
         return;
       }
 
+      const amountNormalized = amount.trim().replace(",", ".");
+      let parsed: bigint;
+      try {
+        parsed = parseUnits(amountNormalized, decimals);
+      } catch {
+        setError(
+          "Monto con formato inválido. Usá solo números y punto decimal (ej. 100 o 10.5).",
+        );
+        return;
+      }
+      if (parsed <= 0n) {
+        setError("El monto debe ser mayor que cero.");
+        return;
+      }
+      if (!balance.encryptedBalance?.length) {
+        setError(
+          "No hay saldo cifrado cargado. Recargá la clave en /registro y esperá unos segundos.",
+        );
+        return;
+      }
+      if (decrypted < parsed) {
+        setError(
+          `Saldo insuficiente: tenés ${formatUnits(decrypted, decimals)} ${sdk.symbol || "CELL"} y querés enviar ${amountNormalized}. ` +
+            "Si sos FinNova u otra wallet sin mint, pedí mint al owner o usá Bankaool (deployer con CELL demo).",
+        );
+        return;
+      }
+
       setFeedback("Generando prueba ZK (1–2 min). No cierres la pestaña…");
-      const parsed = parseUnits(amount.trim(), decimals);
       const { transactionHash } = await balance.privateTransfer(
         trimmed,
         parsed,
@@ -142,7 +173,7 @@ export default function TransferenciasPage() {
           <Feedback message={error} variant="error" />
           {sdk.isRegistered && !hasDecryptionKey ? (
             <Feedback
-              message="Falta la clave de descifrado. En /registro usá «Cargar clave desde el deploy» con el código de equipo."
+              message="Sincronizando credenciales… Si no aparece el saldo, pasá por /registro con la wallet institucional."
               variant="info"
             />
           ) : null}

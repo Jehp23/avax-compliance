@@ -79,15 +79,15 @@ Todo en **https://cello-avax.vercel.app** — sin localhost ni consola.
 
 1. Confirmar deploy: https://cello-avax.vercel.app/api/demo/status → `demoUnlockConfigured: true`  
 2. Perfil **Bankaool** → MetaMask `0x79d23…` → `/registro`  
-3. Panel **“Cargar clave desde el deploy”** → código de equipo (`DEMO_TEAM_PASSPHRASE` en Vercel)  
+3. Esperar 2–3 s en `/registro` o `/transferencias` → **Clave ZK: en sesión** (auto-sync servidor demo, sin código en pantalla)  
 4. **Transferencias** → saldo ~5000 CELL  
-5. Perfil **FinNova** → mismo desbloqueo si hace falta; **auditoría** con esa wallet  
+5. Perfil **FinNova** → misma cuenta demo; **auditoría** con esa wallet  
 
 ### En el video (15 s, en `/registro`)
 
-> “La clave institucional vive en el servidor de demo; el operador la desbloquea con un código de equipo — equivalente a un HSM — sin pegar secretos en la consola.”
+> “Las credenciales institucionales se sincronizan con el HSM de demo al conectar la wallet — sin pegar secretos ni códigos en pantalla.”
 
-Clic en **Cargar clave desde el deploy** (se ve la UI del producto, no F12).
+Mostrá el panel **Estado** con **Clave ZK: en sesión** (no F12).
 
 ---
 
