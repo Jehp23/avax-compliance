@@ -1879,6 +1879,21 @@ aside {
   margin-bottom: 0;
 }
 
+.session-restore-wallet {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text2);
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.session-restore-wallet-hint {
+  color: var(--text3);
+  font-size: 11px;
+}
+
 /* —— Auditoría —— */
 .audit-search-form {
   max-width: 32rem;

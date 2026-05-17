@@ -51,7 +51,17 @@ export function SessionBackupCard({
       const text = await file.text();
       const data = parseCelloSessionFile(text);
       if (data.walletAddress.toLowerCase() !== address.toLowerCase()) {
-        setMsg("El archivo pertenece a otra wallet. Conectá la wallet correcta.");
+        setMsg(
+          `El archivo es de ${shortAddress(data.walletAddress as `0x${string}`)}. Conectá esa wallet en MetaMask.`,
+        );
+        return;
+      }
+      if (
+        data.contractAddress.toLowerCase() !== contractAddress.toLowerCase()
+      ) {
+        setMsg(
+          `El archivo usa el contrato ${shortAddress(data.contractAddress as `0x${string}`)}; la app está en ${shortAddress(contractAddress)}.`,
+        );
         return;
       }
       applyCelloSession(data);

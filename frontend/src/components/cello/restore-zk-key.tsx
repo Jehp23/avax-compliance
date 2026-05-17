@@ -108,6 +108,16 @@ export function RestoreZkKey() {
         Pegá el <strong>JSON completo</strong> de respaldo (recomendado) o solo
         el valor de <code>decryptionKey</code>.
       </p>
+      {address ? (
+        <p className="session-restore-wallet">
+          Wallet conectada:{" "}
+          <span className="font-mono">{shortAddress(address)}</span>
+          <span className="session-restore-wallet-hint">
+            {" "}
+            — la clave se asocia solo a esta cuenta
+          </span>
+        </p>
+      ) : null}
       <label className="fl mt-3">
         <span className="fl-label">JSON o clave</span>
         <textarea
