@@ -1894,6 +1894,12 @@ aside {
   font-size: 11px;
 }
 
+.zero-balance-hint {
+  margin-bottom: 16px;
+  border-color: color-mix(in srgb, var(--amber) 40%, var(--border));
+  background: var(--amber-lt);
+}
+
 /* —— Auditoría —— */
 .audit-search-form {
   max-width: 32rem;

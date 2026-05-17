@@ -51,6 +51,11 @@ export function TransferenciasEerc() {
     hasDecryptionKey && sdk.isRegistered
       ? formatUnits(decrypted, decimals)
       : "—";
+  const showZeroBalanceHint =
+    hasDecryptionKey &&
+    sdk.isRegistered &&
+    sdk.isAllDataFetched &&
+    decrypted === 0n;
 
   function pickCounterparty(addr?: `0x${string}`) {
     if (addr) {
@@ -210,6 +215,23 @@ export function TransferenciasEerc() {
               <ImportDemoKey />
               <RestoreZkKey />
             </>
+          ) : null}
+          {showZeroBalanceHint ? (
+            <div className="panel zero-balance-hint">
+              <p className="panel-label">Saldo CELL en cero</p>
+              <p className="panel-text text-sm">
+                El registro eERC solo habilita la wallet; no acredita tokens. Necesitás
+                un <strong>privateMint</strong> del operador del contrato o una
+                transferencia entrante desde otra institución en el mismo contrato (
+                {shortAddress(contract)}).
+              </p>
+              <p className="panel-text text-sm mt-2">
+                Contrato del equipo Cello en Fuji:{" "}
+                <span className="font-mono">0x45C131…FD7F</span>. Si te registraste en
+                otro contrato (ej. 0x5E9c…), pedí mint ahí o volvé a registrarte con el
+                contrato del deploy.
+              </p>
+            </div>
           ) : null}
           {lastAuditCode ? (
             <AuditCodeCard auditAccessCode={lastAuditCode} txHash={lastTx} />
