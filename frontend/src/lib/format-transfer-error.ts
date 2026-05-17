@@ -22,9 +22,23 @@ export function formatTransferError(err: unknown): string {
     );
   }
 
+  if (/0xe450d38c|ERC20InsufficientBalance/i.test(msg)) {
+    return (
+      "No tenés suficiente token público (DMT/TEST) en la wallet para ese monto. " +
+      "La columna «DMT público» debe ser mayor que cero antes de depositar. Pedí mint del token demo al equipo."
+    );
+  }
+
   if (/insufficient|balance|saldo/i.test(msg)) {
     return `Saldo insuficiente o no descifrado: ${msg}`;
   }
 
-  return msg || "No se pudo enviar la transferencia.";
+  if (/deposit.*reverted|function "deposit"/i.test(msg)) {
+    return (
+      "El depósito fue rechazado por el contrato. Revisá que tengas token público suficiente " +
+      "y que hayas aprobado el monto antes (paso 1)."
+    );
+  }
+
+  return msg || "No se pudo completar la operación.";
 }

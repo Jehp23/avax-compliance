@@ -167,6 +167,16 @@ export function EercDepositPanel() {
       setError("Primero aprobá el monto (paso 1).");
       return;
     }
+    if (publicBal === undefined) {
+      setError("No se pudo leer el saldo del token. Reintentá en unos segundos.");
+      return;
+    }
+    if (publicBal < value) {
+      setError(
+        `Saldo insuficiente: tenés ${publicDisplay} ${symbol} y querés depositar ${amount.trim()}. Pedí mint del token demo.`,
+      );
+      return;
+    }
 
     setBusy(true);
     setStep("deposit");
@@ -230,6 +240,15 @@ export function EercDepositPanel() {
 
   const parsed = parseAmount();
   const needsApprove = parsed !== null && (allowance ?? 0n) < parsed;
+  const hasPublicFunds = publicBal !== undefined && publicBal > 0n;
+  const insufficientPublic =
+    parsed !== null && publicBal !== undefined && publicBal < parsed;
+  const canDeposit =
+    hasPublicFunds &&
+    !insufficientPublic &&
+    sdk.isRegistered &&
+    hasDecryptionKey &&
+    !needsApprove;
 
   return (
     <div className="app-layout cargar-layout">
@@ -330,7 +349,13 @@ export function EercDepositPanel() {
         ) : null}
         {isConnected && publicBal === 0n ? (
           <Feedback
-            message={`Sin ${symbol} en wallet. MetaMask puede mostrar AVAX; acá hace falta el ERC20 demo. Pedí mint al equipo.`}
+            message={`Sin ${symbol} en wallet — no podés depositar hasta tener token público. El approve (paso 1) no acredita saldo; pedí mint del ERC20 demo al equipo.`}
+            variant="info"
+          />
+        ) : null}
+        {isConnected && insufficientPublic ? (
+          <Feedback
+            message={`El monto (${amount.trim()}) supera tu saldo ${symbol} (${publicDisplay}). Bajá el monto o pedí mint.`}
             variant="info"
           />
         ) : null}
@@ -391,8 +416,13 @@ export function EercDepositPanel() {
               <button
                 type="submit"
                 className="primary-btn"
-                disabled={
-                  busy || needsApprove || !sdk.isRegistered || !hasDecryptionKey
+                disabled={busy || !canDeposit}
+                title={
+                  !hasPublicFunds
+                    ? `Necesitás ${symbol} en wallet antes de depositar`
+                    : insufficientPublic
+                      ? "Monto mayor al saldo público"
+                      : undefined
                 }
               >
                 {step === "deposit" ? "Depositando…" : "2 · Depositar y cifrar"}
