@@ -5,14 +5,26 @@ import { avalancheFuji } from "wagmi/chains";
 
 import { useCelloEerc } from "@/contexts/eerc-context";
 import { useMyInstitution } from "@/hooks/use-my-institution";
+import { useMounted } from "@/hooks/use-mounted";
 import { isAvaxPaymentMode } from "@/lib/payment-asset";
 import { shortAddress } from "@/lib/format-address";
 
 export function WalletStatus() {
   const { address, isConnected, chainId } = useAccount();
-  const { sdk, hasDecryptionKey } = useCelloEerc();
+  const { sdk, hasDecryptionKey, sessionReady } = useCelloEerc();
   const { approved } = useMyInstitution(address);
   const avaxMode = isAvaxPaymentMode();
+  const mounted = useMounted();
+  const clientReady = mounted && sessionReady;
+
+  if (!clientReady) {
+    return (
+      <div className="panel">
+        <p className="panel-label">Estado</p>
+        <p className="panel-text text-sm">Sincronizando sesión…</p>
+      </div>
+    );
+  }
 
   const rows = [
     {

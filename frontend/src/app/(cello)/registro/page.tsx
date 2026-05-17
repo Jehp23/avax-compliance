@@ -23,6 +23,7 @@ import {
 import { formatTransferError } from "@/lib/format-transfer-error";
 import { ImportDemoKey } from "@/components/cello/import-demo-key";
 import { RestoreZkKey } from "@/components/cello/restore-zk-key";
+import { useMounted } from "@/hooks/use-mounted";
 
 export default function RegistroPage() {
   const router = useRouter();
@@ -32,8 +33,10 @@ export default function RegistroPage() {
     persistDecryptionKey,
     contractAddress,
     hasDecryptionKey,
+    sessionReady,
     refreshDecryptionKey,
   } = useCelloEerc();
+  const mounted = useMounted();
   const { approved: institutionOk, loading: loadingInst } =
     useMyInstitution(address);
 
@@ -48,9 +51,17 @@ export default function RegistroPage() {
   const avaxMode = isAvaxPaymentMode();
   const walletDone = isConnected;
   const kycDone = kycAccepted;
-  const registered = avaxMode ? institutionOk : sdk.isRegistered;
+  const clientReady = mounted && sessionReady;
+  const registered =
+    clientReady && (avaxMode ? institutionOk : sdk.isRegistered);
   const sdkReady =
-    Boolean(sdk) && sdk.isInitialized && sdk.isAllDataFetched;
+    clientReady && Boolean(sdk) && sdk.isInitialized && sdk.isAllDataFetched;
+  const showZkRecovery =
+    clientReady &&
+    !avaxMode &&
+    sdk.isRegistered &&
+    !hasDecryptionKey &&
+    sdkReady;
 
   useEffect(() => {
     if (!address || avaxMode) return;
@@ -317,7 +328,7 @@ export default function RegistroPage() {
         </button>
       ) : (
         <>
-          {!avaxMode && sdk.isRegistered && !hasDecryptionKey && sdkReady ? (
+          {showZkRecovery ? (
             <>
               <Feedback
                 message="Registro on-chain activo, pero falta la clave ZK en este navegador. Usá una opción de abajo para recuperarla."

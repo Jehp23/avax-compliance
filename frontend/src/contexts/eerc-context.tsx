@@ -37,6 +37,8 @@ type EercContextValue = {
   sdk: EercSdk;
   walletConnected: boolean;
   hasDecryptionKey: boolean;
+  /** false hasta hidratar sessionStorage (evita mismatch React #418). */
+  sessionReady: boolean;
   persistDecryptionKey: (key: string) => void;
   refreshDecryptionKey: () => void;
 };
@@ -47,6 +49,7 @@ type SdkRuntimeProps = {
   appOrigin: string;
   circuitOrigin: string;
   decryptionKey: string | undefined;
+  sessionReady: boolean;
   contractAddress: `0x${string}`;
   env: ReturnType<typeof getPublicEnv>;
   isConnected: boolean;
@@ -59,6 +62,7 @@ function EercSdkRuntime({
   appOrigin,
   circuitOrigin,
   decryptionKey,
+  sessionReady,
   contractAddress,
   env,
   isConnected,
@@ -89,6 +93,7 @@ function EercSdkRuntime({
       sdk,
       walletConnected: isConnected,
       hasDecryptionKey: Boolean(decryptionKey),
+      sessionReady,
       persistDecryptionKey,
       refreshDecryptionKey,
     }),
@@ -98,6 +103,7 @@ function EercSdkRuntime({
       sdk,
       isConnected,
       decryptionKey,
+      sessionReady,
       persistDecryptionKey,
       refreshDecryptionKey,
     ],
@@ -123,27 +129,33 @@ export function EercProvider({
     setCircuitOrigin(live !== appOrigin ? live : appOrigin);
   }, [appOrigin]);
 
-  const [decryptionKey, setDecryptionKey] = useState<string | undefined>(() =>
-    typeof window === "undefined" ? undefined : undefined,
+  const [decryptionKey, setDecryptionKey] = useState<string | undefined>(
+    undefined,
   );
+  const [sessionReady, setSessionReady] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!address) {
       setDecryptionKey(undefined);
+      setSessionReady(true);
       return;
     }
-    const stored = loadDecryptionKey(address, contractAddress);
-    setDecryptionKey(stored);
+    setDecryptionKey(loadDecryptionKey(address, contractAddress));
+    setSessionReady(true);
   }, [address, contractAddress]);
 
   useEffect(() => {
     const sync = () => {
       if (!address) return;
       const stored = loadDecryptionKey(address, contractAddress);
-      if (stored) setDecryptionKey(stored);
+      setDecryptionKey(stored);
     };
     window.addEventListener("focus", sync);
-    return () => window.removeEventListener("focus", sync);
+    window.addEventListener("cello-session-updated", sync);
+    return () => {
+      window.removeEventListener("focus", sync);
+      window.removeEventListener("cello-session-updated", sync);
+    };
   }, [address, contractAddress]);
 
   const persistDecryptionKey = useCallback(
@@ -172,6 +184,7 @@ export function EercProvider({
       appOrigin={appOrigin}
       circuitOrigin={circuitOrigin}
       decryptionKey={decryptionKey}
+      sessionReady={sessionReady}
       contractAddress={contractAddress}
       env={env}
       isConnected={isConnected}

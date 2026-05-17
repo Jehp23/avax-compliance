@@ -102,6 +102,54 @@ export function sessionMatches(
   );
 }
 
+export type CelloSessionInput = {
+  walletAddress: string;
+  contractAddress: string;
+  decryptionKey: string;
+  registerTxHash?: string;
+  institution?: { name: string; initials: string };
+};
+
+export function applyCelloSession(input: CelloSessionInput): void {
+  saveCelloSession({
+    v: 1,
+    walletAddress: input.walletAddress,
+    contractAddress: input.contractAddress,
+    decryptionKey: input.decryptionKey.trim(),
+    registeredAt: new Date().toISOString(),
+    registerTxHash: input.registerTxHash,
+    institution: input.institution,
+  });
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("cello-session-updated"));
+  }
+}
+
+/** Para consola: pegar objeto o JSON string sin recargar la página. */
+export function applyCelloSessionFromConsole(
+  payload: CelloSessionInput | string,
+): string {
+  try {
+    const data =
+      typeof payload === "string"
+        ? (JSON.parse(payload) as CelloSessionInput)
+        : payload;
+    if (!data.walletAddress?.startsWith("0x")) {
+      return "Error: walletAddress debe ser 0x… (minúsculas ok).";
+    }
+    if (!data.contractAddress?.startsWith("0x")) {
+      return "Error: contractAddress debe ser 0x…";
+    }
+    if (!/^\d+$/.test(String(data.decryptionKey).trim())) {
+      return "Error: decryptionKey debe ser el número largo (solo dígitos).";
+    }
+    applyCelloSession(data);
+    return "OK — sesión guardada. Si no ves cambios, conectá la wallet correcta.";
+  } catch {
+    return "Error: JSON inválido.";
+  }
+}
+
 export function loadSessionDecryptionKey(
   wallet?: string,
   contract?: string,

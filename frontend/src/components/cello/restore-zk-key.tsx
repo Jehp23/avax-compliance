@@ -5,7 +5,7 @@ import { useAccount } from "wagmi";
 
 import { Feedback } from "@/components/feedback";
 import { useCelloEerc } from "@/contexts/eerc-context";
-import { saveCelloSession } from "@/lib/cello-session";
+import { applyCelloSession } from "@/lib/cello-session";
 
 /** Pegar clave ZK exportada al registrarse (mismo navegador u otro dispositivo). */
 export function RestoreZkKey() {
@@ -28,15 +28,13 @@ export function RestoreZkKey() {
       return;
     }
     persistDecryptionKey(key);
-    saveCelloSession({
-      v: 1,
+    applyCelloSession({
       walletAddress: address,
       contractAddress,
       decryptionKey: key,
-      registeredAt: new Date().toISOString(),
     });
     setKeyInput("");
-    setMsg("Clave restaurada en este navegador.");
+    setMsg("Clave restaurada. Podés ir a Transferencias sin recargar.");
   }
 
   return (
