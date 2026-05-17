@@ -80,14 +80,14 @@ export function useCircuitBlobUrls(origin: string): {
           ([k]) => k !== "register",
         ) as [keyof CircuitUrlsConfig, { wasm: string; zkey: string }][];
 
-        const full: CircuitUrlsConfig = { ...partial };
+        let loaded: CircuitUrlsConfig = partial;
         for (const [key, cfg] of rest) {
           const wasm = await fetchCircuitBlob(origin, cfg.wasm);
           const zkey = await fetchCircuitBlob(origin, cfg.zkey);
           blobUrlsRef.current.push(wasm.url, zkey.url);
-          full[key] = { wasm: wasm.url, zkey: zkey.url };
+          loaded = { ...loaded, [key]: { wasm: wasm.url, zkey: zkey.url } };
           if (cancelled) return;
-          setCircuitUrls({ ...full });
+          setCircuitUrls(loaded);
         }
       } catch (e) {
         if (!cancelled) {
