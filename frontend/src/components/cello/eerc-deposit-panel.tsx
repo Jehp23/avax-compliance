@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { type FormEvent, useEffect, useState } from "react";
 import { erc20Abi, formatUnits, parseUnits } from "viem";
 import {
@@ -13,10 +14,12 @@ import { avalancheFuji } from "wagmi/chains";
 
 import { Feedback } from "@/components/feedback";
 import { ZkProgress } from "@/components/zk-progress";
+import { PageHeader } from "@/components/cello/page-header";
 import { WalletStatus } from "@/components/cello/wallet-status";
 import { useCelloEerc, useEncryptedBalanceHook } from "@/contexts/eerc-context";
 import { resolveConverterToken } from "@/lib/eerc-config";
 import { explorerAddressUrl } from "@/lib/explorer";
+import { formatAvaxDisplay, formatWeiDisplay } from "@/lib/format-avax";
 import { formatTransferError } from "@/lib/format-transfer-error";
 import { shortAddress } from "@/lib/format-address";
 
@@ -93,12 +96,16 @@ export function EercDepositPanel() {
   }, [approveOk, approveHash, refetchAllowance]);
 
   const decimals = tokenDecimals ? Number(tokenDecimals) : 18;
-  const publicDisplay =
-    publicBal !== undefined ? formatUnits(publicBal, decimals) : "—";
   const eercDecimals = eercDecimalsRaw ? Number(eercDecimalsRaw) : 18;
+  const symbol = tokenSymbol ?? "TEST";
+  const registeredOnThisContract = sdk.isRegistered;
+  const decrypted = decryptedBalance ?? 0n;
+
+  const avaxDisplay = formatAvaxDisplay(avaxBal?.value);
+  const publicDisplay = formatWeiDisplay(publicBal, decimals);
   const encryptedDisplay =
     hasDecryptionKey && sdk.isRegistered
-      ? formatUnits(decryptedBalance ?? 0n, eercDecimals)
+      ? formatWeiDisplay(decryptedBalance, eercDecimals)
       : "—";
 
   function parseAmount(): bigint | null {
@@ -182,25 +189,6 @@ export function EercDepositPanel() {
     }
   }
 
-  if (waitingApprove && approveHash) {
-    return (
-      <div className="panel">
-        <ZkProgress />
-        <Feedback message="Confirmando approve en Fuji…" variant="loading" />
-      </div>
-    );
-  }
-
-  const parsed = parseAmount();
-  const needsApprove = parsed !== null && (allowance ?? 0n) < parsed;
-  const symbol = tokenSymbol ?? "TEST";
-  const avaxDisplay =
-    avaxBal?.value !== undefined
-      ? `${formatUnits(avaxBal.value, avaxBal.decimals)} AVAX`
-      : "—";
-  const registeredOnThisContract = sdk.isRegistered;
-  const decrypted = decryptedBalance ?? 0n;
-
   function useMaxPublic() {
     if (publicBal !== undefined && publicBal > 0n) {
       setAmount(formatUnits(publicBal, decimals));
@@ -231,160 +219,192 @@ export function EercDepositPanel() {
     }
   }
 
+  if (waitingApprove && approveHash) {
+    return (
+      <div className="panel">
+        <ZkProgress />
+        <Feedback message="Confirmando approve en Fuji…" variant="loading" />
+      </div>
+    );
+  }
+
+  const parsed = parseAmount();
+  const needsApprove = parsed !== null && (allowance ?? 0n) < parsed;
+
   return (
-    <>
-      <WalletStatus />
-
-      <div className="panel mt-4">
-        <p className="panel-label">Tu wallet en Fuji</p>
-        <p className="panel-text text-sm">
-          Lo que ves acá es tu cuenta en <strong>Avalanche Fuji</strong>. MetaMask
-          puede mostrar otros activos en otras redes; para cargar eERC necesitás el
-          token <strong>{symbol}</strong> (columna del medio).
-        </p>
-
-        <div className="grid gap-3 mt-4 sm:grid-cols-3">
-          <div className="rounded-lg border border-[var(--border)] p-3">
-            <p className="text-[11px] uppercase tracking-wide text-[var(--text2)]">
-              Gas (nativo)
-            </p>
-            <p className="text-lg font-semibold mt-1 tabular-nums">{avaxDisplay}</p>
-            <p className="text-xs text-[var(--text2)] mt-1">Comisiones de red</p>
+    <div className="app-layout cargar-layout">
+      <aside aria-label="Saldos de tu wallet">
+        <div className="aside-sect">
+          <div className="aside-label">Tu wallet · Fuji</div>
+          <div className="bal-block">
+            <div className="bal-label">Gas</div>
+            <div className="bal-val" title={avaxDisplay}>
+              {avaxDisplay}
+            </div>
+            <div className="bal-currency">AVAX</div>
           </div>
-          <div className="rounded-lg border border-[var(--border)] p-3">
-            <p className="text-[11px] uppercase tracking-wide text-[var(--text2)]">
-              {symbol} en wallet
-            </p>
-            <p className="text-lg font-semibold mt-1 tabular-nums">
-              {publicDisplay} {symbol}
-            </p>
-            <p className="text-xs text-[var(--text2)] mt-1">Se deposita y pasa a cifrado</p>
+          <div className="bal-block">
+            <div className="bal-label">{symbol} público</div>
+            <div className="bal-val" title={publicDisplay}>
+              {publicDisplay}
+            </div>
+            <div className="bal-currency">{symbol} · para depositar</div>
             {tokenAddress ? (
               <button
                 type="button"
-                className="text-xs underline mt-2 text-[var(--text2)]"
+                className="cargar-aside-link"
                 onClick={() => void addTokenToWallet()}
               >
-                Ver {symbol} en MetaMask
+                + MetaMask
               </button>
             ) : null}
           </div>
-          <div className="rounded-lg border border-[var(--border)] p-3">
-            <p className="text-[11px] uppercase tracking-wide text-[var(--text2)]">
-              Saldo cifrado eERC
-            </p>
-            <p className="text-lg font-semibold mt-1 tabular-nums">{encryptedDisplay}</p>
-            <p className="text-xs text-[var(--text2)] mt-1">Usado en Transferencias</p>
+          <div className="bal-block">
+            <div className="bal-label">Saldo cifrado</div>
+            <div className="bal-val" title={encryptedDisplay}>
+              {encryptedDisplay}
+            </div>
+            <div className="bal-currency">eERC · Transferencias</div>
+            <div className="bal-enc">
+              <span className="enc-dot" aria-hidden />
+              privado on-chain
+            </div>
           </div>
         </div>
 
-        <dl className="session-backup-card__meta mt-4">
-          <div className="session-backup-card__meta-row">
-            <dt>Tu cuenta</dt>
-            <dd>{address ? shortAddress(address) : "—"}</dd>
+        <div className="aside-sect">
+          <div className="aside-label">Referencias</div>
+          <div className="stat-row">
+            <span className="stat-key">Cuenta</span>
+            <span className="stat-val">{address ? shortAddress(address) : "—"}</span>
           </div>
-          <div className="session-backup-card__meta-row">
-            <dt>Token ERC20 ({symbol})</dt>
-            <dd>
+          <div className="stat-row">
+            <span className="stat-key">Token</span>
+            <span className="stat-val">
               {tokenAddress ? (
                 <a
                   href={explorerAddressUrl(tokenAddress)}
                   target="_blank"
                   rel="noreferrer"
-                  className="underline"
+                  className="cargar-explorer-link"
                 >
                   {shortAddress(tokenAddress)}
                 </a>
               ) : (
                 "—"
               )}
-            </dd>
+            </span>
           </div>
-          <div className="session-backup-card__meta-row">
-            <dt>Contrato eERC</dt>
-            <dd>{shortAddress(contractAddress)}</dd>
+          <div className="stat-row">
+            <span className="stat-key">eERC</span>
+            <span className="stat-val">{shortAddress(contractAddress)}</span>
           </div>
-        </dl>
+        </div>
+
+        <WalletStatus />
+      </aside>
+
+      <div className="main">
+        <PageHeader
+          kicker="Cargar saldo"
+          title={`Depositar ${symbol} → eERC`}
+          description="Aprobá el token público y depositá. El saldo cifrado queda disponible en Transferencias."
+        />
+
+        <Feedback message={error} variant="error" />
 
         {!isConnected ? (
           <Feedback message="Conectá tu wallet en Fuji." variant="info" />
         ) : null}
         {isConnected && !registeredOnThisContract ? (
           <Feedback
-            message="Esta wallet no está registrada en el contrato eERC actual. Andá a Registro con la misma cuenta (contrato converter)."
+            message="Registrate en este contrato (Registro) con la misma wallet."
             variant="info"
           />
         ) : null}
         {isConnected && registeredOnThisContract && !hasDecryptionKey ? (
           <Feedback
-            message="Falta la clave ZK en este navegador. Completá Registro o importá tu JSON de sesión."
+            message="Falta la clave ZK. Completá Registro o importá tu JSON."
             variant="info"
           />
         ) : null}
         {isConnected && publicBal === 0n ? (
           <Feedback
-            message={`Tenés 0 ${symbol} en este token. Si en MetaMask ves AVAX u otro activo, es distinto: acá solo cuenta el ERC20 demo en ${tokenAddress ? shortAddress(tokenAddress) : "Fuji"}. Pedí mint al equipo.`}
+            message={`Sin ${symbol} en wallet. MetaMask puede mostrar AVAX; acá hace falta el ERC20 demo. Pedí mint al equipo.`}
             variant="info"
           />
         ) : null}
         {isConnected && publicBal !== undefined && publicBal > 0n && decrypted === 0n ? (
           <Feedback
-            message={`Tenés ${publicDisplay} ${symbol} para depositar. Usá los pasos de abajo; después el saldo cifrado aparece en Transferencias.`}
+            message={`Tenés ${publicDisplay} ${symbol} listos para depositar.`}
             variant="success"
           />
         ) : null}
 
-        <p className="panel-label mt-5">Convertir {symbol} → saldo cifrado</p>
-
-        <form className="mt-3" onSubmit={onDeposit}>
-          <label className="fl">
-            <span className="fl-label">Monto a depositar</span>
-            <div className="flex gap-2">
-              <input
-                className="fl-input flex-1"
-                inputMode="decimal"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="100"
-              />
-              <button
-                type="button"
-                className="secondary-btn shrink-0"
-                disabled={!publicBal || publicBal === 0n}
-                onClick={useMaxPublic}
-              >
-                Máximo
-              </button>
-            </div>
-          </label>
-
-          <div className="session-backup-card__actions mt-3">
-            <button
-              type="button"
-              className="secondary-btn"
-              disabled={busy || !needsApprove || !address}
-              onClick={() => void onApprove()}
-            >
-              {step === "approve" ? "Aprobando…" : `1. Aprobar ${symbol}`}
-            </button>
-            <button
-              type="submit"
-              className="primary-btn"
-              disabled={
-                busy || needsApprove || !sdk.isRegistered || !hasDecryptionKey
-              }
-            >
-              {step === "deposit" ? "Depositando…" : "2. Depositar y cifrar"}
-            </button>
-          </div>
-        </form>
-
-        <Feedback message={error} variant="error" />
         <Feedback
           message={feedback}
           variant={feedback?.includes("confirmado") ? "success" : "info"}
         />
+        {busy ? <ZkProgress /> : null}
+
+        <form className="form-card" onSubmit={onDeposit}>
+          <div className="form-card-head">
+            <div className="form-card-title">Depósito</div>
+            <div className="form-card-meta">Converter · ZK</div>
+          </div>
+          <div className="fields">
+            <p className="panel-hint" style={{ margin: 0 }}>
+              Paso 1: permitir gasto de {symbol}. Paso 2: cifrar en el contrato eERC.
+            </p>
+            <div className="fl">
+              <span className="fl-label">Monto</span>
+              <div className="amt-row">
+                <input
+                  className="fl-input lg"
+                  style={{ flex: 1 }}
+                  inputMode="decimal"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="100"
+                />
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  disabled={!publicBal || publicBal === 0n}
+                  onClick={useMaxPublic}
+                >
+                  Máx.
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="form-footer">
+            <div className="btn-row cargar-btn-row">
+              <button
+                type="button"
+                className="secondary-btn"
+                disabled={busy || !needsApprove || !address}
+                onClick={() => void onApprove()}
+              >
+                {step === "approve" ? "Aprobando…" : `1 · Aprobar ${symbol}`}
+              </button>
+              <button
+                type="submit"
+                className="primary-btn"
+                disabled={
+                  busy || needsApprove || !sdk.isRegistered || !hasDecryptionKey
+                }
+              >
+                {step === "deposit" ? "Depositando…" : "2 · Depositar y cifrar"}
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <p className="cargar-footnote">
+          <Link href="/transferencias">Ir a transferencias →</Link>
+        </p>
       </div>
-    </>
+    </div>
   );
 }

@@ -2462,9 +2462,73 @@ aside {
   margin-top: 8px;
 }
 
+/* —— Cargar (converter deposit) —— */
+.cargar-layout aside .panel {
+  margin: 0 12px 16px;
+}
+
+.cargar-aside-link {
+  margin-top: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cargar-aside-link:hover {
+  color: var(--ink);
+}
+
+.cargar-explorer-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cargar-explorer-link:hover {
+  color: var(--ink);
+}
+
+.cargar-btn-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.cargar-btn-row .primary-btn,
+.cargar-btn-row .secondary-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.cargar-footnote {
+  margin: 16px 0 0;
+  font-size: 12px;
+  color: var(--text3);
+}
+
+.cargar-footnote a {
+  color: var(--text2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cargar-footnote a:hover {
+  color: var(--ink);
+}
+
 @media (max-width: 900px) {
   .landing-stats {
     grid-template-columns: 1fr;
     max-width: 240px;
+  }
+
+  .cargar-btn-row {
+    grid-template-columns: 1fr;
   }
 }

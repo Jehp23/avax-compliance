@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-
 import { EercDepositPanel } from "@/components/cello/eerc-deposit-panel";
 import { PageHeader } from "@/components/cello/page-header";
 import { PageShell } from "@/components/cello/page-shell";
@@ -48,18 +46,8 @@ NEXT_PUBLIC_CONVERTER_ERC20_ADDRESS=0xb0Fe621B4Bd7fe4975f7c58E3D6ADaEb2a2A35CD`}
   }
 
   return (
-    <PageShell width="narrow">
-      <PageHeader
-        kicker="Cargar saldo"
-        title="Tu wallet y depósito a eERC"
-        description="Arriba ves AVAX, el token público de tu cuenta y el saldo cifrado. Depositás el token público para poder transferir en privado."
-      />
+    <PageShell width="full">
       <EercDepositPanel />
-      <p className="mt-4 text-center text-sm">
-        <Link href="/transferencias" className="underline text-[var(--text2)]">
-          Ir a transferencias
-        </Link>
-      </p>
     </PageShell>
   );
 }
