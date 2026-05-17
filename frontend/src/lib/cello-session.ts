@@ -21,6 +21,15 @@ function normalizeAddress(addr: string): string {
   return addr.trim().toLowerCase();
 }
 
+/** Clave ZK del SDK: decimal largo (demo) o hex de 64 caracteres (registro normal). */
+export function isValidDecryptionKey(key: string): boolean {
+  const k = key.trim();
+  if (!k) return false;
+  if (/^\d{20,}$/.test(k)) return true;
+  if (/^[0-9a-fA-F]{64}$/.test(k)) return true;
+  return false;
+}
+
 export function loadCelloSession(): CelloSession | null {
   if (typeof window === "undefined") return null;
   try {
@@ -140,8 +149,8 @@ export function applyCelloSessionFromConsole(
     if (!data.contractAddress?.startsWith("0x")) {
       return "Error: contractAddress debe ser 0x…";
     }
-    if (!/^\d+$/.test(String(data.decryptionKey).trim())) {
-      return "Error: decryptionKey debe ser el número largo (solo dígitos).";
+    if (!isValidDecryptionKey(String(data.decryptionKey))) {
+      return "Error: decryptionKey inválida (hex 64 chars o decimal largo).";
     }
     applyCelloSession(data);
     return "OK — sesión guardada. Si no ves cambios, conectá la wallet correcta.";

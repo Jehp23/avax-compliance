@@ -5,7 +5,7 @@ import { useAccount } from "wagmi";
 
 import { Feedback } from "@/components/feedback";
 import { useCelloEerc } from "@/contexts/eerc-context";
-import { applyCelloSession } from "@/lib/cello-session";
+import { applyCelloSession, isValidDecryptionKey } from "@/lib/cello-session";
 
 /** Pegar clave ZK exportada al registrarse (mismo navegador u otro dispositivo). */
 export function RestoreZkKey() {
@@ -23,8 +23,10 @@ export function RestoreZkKey() {
       return;
     }
     const key = keyInput.trim();
-    if (!key || !/^\d+$/.test(key)) {
-      setMsg("Pegá la clave numérica completa que obtuviste al registrarte.");
+    if (!isValidDecryptionKey(key)) {
+      setMsg(
+        "Pegá el valor de decryptionKey del JSON (hex 64 caracteres o número decimal largo).",
+      );
       return;
     }
     persistDecryptionKey(key);
@@ -41,8 +43,8 @@ export function RestoreZkKey() {
     <div className="panel mt-4">
       <p className="panel-label">Restaurar clave ZK manualmente</p>
       <p className="panel-text text-sm">
-        Si registraste esta wallet antes, pegá la clave privada de descifrado
-        (número largo) que se guardó al hacer el onboarding.
+        Pegá el campo decryptionKey de tu JSON de respaldo, o importá el archivo
+        completo en el panel de arriba.
       </p>
       <label className="fl mt-3">
         <span className="fl-label">Clave de descifrado</span>
@@ -50,7 +52,7 @@ export function RestoreZkKey() {
           className="fl-input min-h-[72px] font-mono text-xs"
           value={keyInput}
           onChange={(e) => setKeyInput(e.target.value)}
-          placeholder="1786377130476436939165516341661479903892551626273299201306892914679192368067"
+          placeholder="35c952063b6e698f213141d745b12566c7b071df056de795c35be0254ba7f5b"
           spellCheck={false}
         />
       </label>
