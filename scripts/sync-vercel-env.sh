@@ -25,6 +25,7 @@ def parse_env(path):
 
 env = parse_env(".env.local")
 keys = [
+    "NEXT_PUBLIC_PAYMENT_ASSET",
     "NEXT_PUBLIC_AVALANCHE_FUJI_RPC",
     "NEXT_PUBLIC_EERC_CONTRACT_ADDRESS",
     "NEXT_PUBLIC_EERC_MODE",
