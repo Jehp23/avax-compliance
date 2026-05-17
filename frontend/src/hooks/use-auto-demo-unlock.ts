@@ -31,7 +31,10 @@ export function useAutoDemoUnlock() {
         const data = (await res.json()) as {
           decryptionKey?: string;
         };
-        if (cancelled || !res.ok || !data.decryptionKey) return;
+        if (cancelled || !res.ok || !data.decryptionKey) {
+          attempted.current = null;
+          return;
+        }
         persistDecryptionKey(data.decryptionKey);
       } catch {
         attempted.current = null;

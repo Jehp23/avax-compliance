@@ -21,12 +21,19 @@ import {
   sessionMatches,
 } from "@/lib/cello-session";
 import { formatTransferError } from "@/lib/format-transfer-error";
+import { ImportDemoKey } from "@/components/cello/import-demo-key";
+import { RestoreZkKey } from "@/components/cello/restore-zk-key";
 
 export default function RegistroPage() {
   const router = useRouter();
   const { isConnected, address } = useAccount();
-  const { sdk, persistDecryptionKey, contractAddress, hasDecryptionKey } =
-    useCelloEerc();
+  const {
+    sdk,
+    persistDecryptionKey,
+    contractAddress,
+    hasDecryptionKey,
+    refreshDecryptionKey,
+  } = useCelloEerc();
   const { approved: institutionOk, loading: loadingInst } =
     useMyInstitution(address);
 
@@ -60,6 +67,12 @@ export default function RegistroPage() {
       }
     }
   }, [address, avaxMode, contractAddress, hasDecryptionKey]);
+
+  useEffect(() => {
+    if (!avaxMode && sdk.isRegistered) {
+      refreshDecryptionKey();
+    }
+  }, [avaxMode, sdk.isRegistered, refreshDecryptionKey]);
 
   useEffect(() => {
     if (!address) return;
@@ -303,16 +316,28 @@ export default function RegistroPage() {
               : "Registrar en eERC20"}
         </button>
       ) : (
-        <button
-          type="button"
-          className="primary-btn"
-          disabled={!avaxMode && !hasDecryptionKey}
-          onClick={() => router.push("/transferencias")}
-        >
-          {avaxMode || hasDecryptionKey
-            ? "Ir a transferencias"
-            : "Cargando clave local…"}
-        </button>
+        <>
+          {!avaxMode && sdk.isRegistered && !hasDecryptionKey && sdkReady ? (
+            <>
+              <Feedback
+                message="Registro on-chain activo, pero falta la clave ZK en este navegador. Usá una opción de abajo para recuperarla."
+                variant="info"
+              />
+              <ImportDemoKey />
+              <RestoreZkKey />
+            </>
+          ) : null}
+          <button
+            type="button"
+            className="primary-btn"
+            disabled={!avaxMode && !hasDecryptionKey}
+            onClick={() => router.push("/transferencias")}
+          >
+            {avaxMode || hasDecryptionKey
+              ? "Ir a transferencias"
+              : "Recuperá la clave ZK para continuar"}
+          </button>
+        </>
       )}
 
       <div className="note mt-4" role="note">

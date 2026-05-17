@@ -18,6 +18,8 @@ import {
 } from "@/contexts/eerc-context";
 import { AuditCodeCard } from "@/components/cello/audit-code-card";
 import { CounterpartiesPanel } from "@/components/cello/counterparties-panel";
+import { ImportDemoKey } from "@/components/cello/import-demo-key";
+import { RestoreZkKey } from "@/components/cello/restore-zk-key";
 import { useApprovedInstitutions } from "@/hooks/use-approved-institutions";
 import { getEercContractAddress } from "@/lib/contracts";
 import { loadDecryptionKey } from "@/lib/decryption-key-storage";
@@ -200,10 +202,14 @@ export function TransferenciasEerc() {
 
           <Feedback message={error} variant="error" />
           {sdk.isRegistered && !hasDecryptionKey ? (
-            <Feedback
-              message="Completá el onboarding en Registro (mismo navegador) para cargar la clave ZK."
-              variant="info"
-            />
+            <>
+              <Feedback
+                message="Falta la clave ZK en este navegador. Recuperala abajo o en Registro."
+                variant="info"
+              />
+              <ImportDemoKey />
+              <RestoreZkKey />
+            </>
           ) : null}
           {lastAuditCode ? (
             <AuditCodeCard auditAccessCode={lastAuditCode} txHash={lastTx} />
