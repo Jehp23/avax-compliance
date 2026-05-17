@@ -82,9 +82,11 @@ Respuesta esperada:
 Vercel busca `next` en el `package.json` del **Root Directory** del proyecto.
 
 - **Opción A (recomendada):** Vercel → *Project Settings* → *General* → **Root Directory** → `frontend` → *Save* → *Redeploy*.
-- **Opción B:** Dejar Root Directory en la raíz del repo; el monorepo usa `workspaces` + `vercel.json` en la raíz (ver `../vercel.json`).
+- **Opción B:** Root Directory en la raíz del repo; `vercel.json` instala con `npm install --prefix frontend` (sin npm workspaces — evita fallos de `lightningcss` en Linux).
 
-No mezcles `installCommand: npm install --prefix frontend` con Root Directory vacío y `framework: nextjs` en la raíz: el install corre en `frontend/` pero la detección lee el `package.json` de la raíz.
+| Error | Acción |
+|-------|--------|
+| `lightningcss.linux-x64-gnu.node` | No usar `workspaces` en la raíz; install solo en `frontend/` (ver `vercel.json` del repo). |
 
 ## Checklist post-deploy
 
