@@ -1,0 +1,9 @@
+{
+  "name": "avax-compliance",
+  "private": true,
+  "description": "Monorepo Cello — la app Next.js vive en frontend/",
+  "scripts": {
+    "build": "npm run build --prefix frontend",
+    "install:frontend": "npm install --prefix frontend"
+  }
+}
