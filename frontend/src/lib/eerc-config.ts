@@ -1,8 +1,15 @@
 import type { CelloPublicEnv } from "@/lib/env";
 
-/** Contratos de referencia en Fuji (3dent / Ava Labs demo). Override con env en prod. */
-export const FUJI_EERC_STANDALONE =
+/** Demo SDK Ava Labs (solo si no hay env ni deploy Cello). */
+export const FUJI_EERC_STANDALONE_SDK =
   "0x5E9c6F952fB9615583182e70eDDC4e6E4E0aC0e0" as const;
+
+/** Deploy Cello EncryptedERC en Fuji (default standalone del equipo). */
+export const FUJI_EERC_STANDALONE_CELLO =
+  "0x45C1316953c92C402AB9e14EA628182A3494FD7F" as const;
+
+/** @deprecated Usar FUJI_EERC_STANDALONE_CELLO o FUJI_EERC_STANDALONE_SDK */
+export const FUJI_EERC_STANDALONE = FUJI_EERC_STANDALONE_CELLO;
 
 export const FUJI_EERC_CONVERTER =
   "0x372dAB27c8d223Af11C858ea00037Dc03053B22E" as const;

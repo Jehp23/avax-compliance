@@ -23,7 +23,7 @@ import { ImportDemoKey } from "@/components/cello/import-demo-key";
 import { RestoreZkKey } from "@/components/cello/restore-zk-key";
 import { isEercConverterMode } from "@/lib/eerc-mode";
 import { useApprovedInstitutions } from "@/hooks/use-approved-institutions";
-import { getEercContractAddress } from "@/lib/contracts";
+import { loadCelloSession } from "@/lib/cello-session";
 import { loadDecryptionKey } from "@/lib/decryption-key-storage";
 import { formatTransferError } from "@/lib/format-transfer-error";
 import { indexTransferOnServer } from "@/lib/index-transfer";
@@ -31,9 +31,17 @@ import { shortAddress } from "@/lib/format-address";
 
 export function TransferenciasEerc() {
   const { address, isConnected } = useAccount();
-  const { sdk, hasDecryptionKey, persistDecryptionKey } = useCelloEerc();
+  const { sdk, hasDecryptionKey, persistDecryptionKey, contractAddress } =
+    useCelloEerc();
   const balance = useEncryptedBalanceHook();
-  const contract = getEercContractAddress();
+  const contract = contractAddress;
+  const tokenLabel = sdk.symbol || "CELL";
+  const session = address ? loadCelloSession() : null;
+  const sessionContractMismatch =
+    session &&
+    address &&
+    session.walletAddress === address.toLowerCase() &&
+    session.contractAddress !== contract.toLowerCase();
 
   const [destination, setDestination] = useState("");
   const [amount, setAmount] = useState("");
@@ -84,7 +92,7 @@ export function TransferenciasEerc() {
         return;
       }
       if (
-        !loadDecryptionKey(address, contract) &&
+        !loadDecryptionKey(address, contractAddress) &&
         !hasDecryptionKey
       ) {
         setError(
@@ -92,7 +100,7 @@ export function TransferenciasEerc() {
         );
         return;
       }
-      const storedKey = loadDecryptionKey(address, contract);
+      const storedKey = loadDecryptionKey(address, contractAddress);
       if (storedKey && !hasDecryptionKey) {
         persistDecryptionKey(storedKey);
       }
@@ -218,27 +226,34 @@ export function TransferenciasEerc() {
               <RestoreZkKey />
             </>
           ) : null}
+          {sessionContractMismatch ? (
+            <Feedback
+              message={`Tu sesión guardada es del contrato ${shortAddress(session.contractAddress as `0x${string}`)}, pero la app usa ${shortAddress(contract)}. Volvé a Registro en este contrato o importá un JSON de sesión actualizado.`}
+              variant="info"
+            />
+          ) : null}
           {showZeroBalanceHint ? (
             <div className="panel zero-balance-hint">
-              <p className="panel-label">Saldo CELL en cero</p>
+              <p className="panel-label">Saldo {tokenLabel} en cero</p>
               <p className="panel-text text-sm">
-                El registro eERC solo habilita la wallet; no acredita tokens. Necesitás
-                un <strong>privateMint</strong> del operador del contrato o una
-                transferencia entrante desde otra institución en el mismo contrato (
-                {shortAddress(contract)}).
+                El registro eERC solo habilita la wallet en{" "}
+                <strong>{shortAddress(contract)}</strong>; no acredita tokens. En
+                standalone el operador hace <strong>privateMint</strong> a tu
+                dirección, o recibís una transferencia desde otra institución en el
+                mismo contrato.
               </p>
               {isEercConverterMode() ? (
                 <p className="panel-text text-sm mt-2">
                   En modo converter cargá saldo en{" "}
                   <Link href="/cargar" className="underline">
                     Cargar
-                  </Link>{" "}
-                  (depositar TEST → saldo cifrado).
+                  </Link>
+                  .
                 </p>
               ) : (
                 <p className="panel-text text-sm mt-2">
-                  En standalone el operador acredita saldo con privateMint, o
-                  activá modo converter en el deploy para que cada usuario deposite.
+                  Si te registraste recién en este contrato, pedí al equipo el mint de
+                  demo.
                 </p>
               )}
             </div>
