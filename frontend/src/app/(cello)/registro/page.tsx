@@ -36,6 +36,9 @@ export default function RegistroPage() {
     hasDecryptionKey,
     sessionReady,
     refreshDecryptionKey,
+    circuitsLoading,
+    registerCircuitsReady,
+    circuitsError,
   } = useCelloEerc();
   const mounted = useMounted();
   const { approved: institutionOk, loading: loadingInst } =
@@ -57,7 +60,12 @@ export default function RegistroPage() {
   const registered =
     clientReady && (avaxMode ? institutionOk : sdk.isRegistered);
   const sdkReady =
-    clientReady && Boolean(sdk) && sdk.isInitialized && sdk.isAllDataFetched;
+    clientReady &&
+    registerCircuitsReady &&
+    !circuitsError &&
+    Boolean(sdk) &&
+    sdk.isInitialized &&
+    sdk.isAllDataFetched;
   const showZkRecovery =
     clientReady &&
     !avaxMode &&
@@ -230,7 +238,7 @@ export default function RegistroPage() {
         }
       />
 
-      <Feedback message={error} variant="error" />
+      <Feedback message={error ?? circuitsError} variant="error" />
       <Feedback
         message={feedback}
         variant={
@@ -325,9 +333,11 @@ export default function RegistroPage() {
         >
           {busy
             ? "Registrando…"
-            : avaxMode
-              ? "Registrar institución"
-              : "Registrar en eERC20"}
+            : circuitsLoading && !registerCircuitsReady
+              ? "Cargando circuitos ZK…"
+              : avaxMode
+                ? "Registrar institución"
+                : "Registrar en eERC20"}
         </button>
       ) : (
         <div className="register-done">

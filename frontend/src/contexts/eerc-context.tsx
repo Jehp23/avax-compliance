@@ -23,6 +23,7 @@ import {
   resolveConverterToken,
   resolveEercContract,
 } from "@/lib/eerc-config";
+import { useCircuitBlobUrls } from "@/hooks/use-circuit-blob-urls";
 import { getPublicEnv } from "@/lib/env";
 import {
   loadDecryptionKey,
@@ -39,6 +40,9 @@ type EercContextValue = {
   hasDecryptionKey: boolean;
   /** false hasta hidratar sessionStorage (evita mismatch React #418). */
   sessionReady: boolean;
+  circuitsLoading: boolean;
+  registerCircuitsReady: boolean;
+  circuitsError: string | null;
   persistDecryptionKey: (key: string) => void;
   refreshDecryptionKey: () => void;
 };
@@ -48,6 +52,10 @@ const EercContext = createContext<EercContextValue | null>(null);
 type SdkRuntimeProps = {
   appOrigin: string;
   circuitOrigin: string;
+  circuitUrlsForSdk: ReturnType<typeof circuitUrlsWithAppOrigin>;
+  circuitsLoading: boolean;
+  registerCircuitsReady: boolean;
+  circuitsError: string | null;
   decryptionKey: string | undefined;
   sessionReady: boolean;
   contractAddress: `0x${string}`;
@@ -61,6 +69,10 @@ type SdkRuntimeProps = {
 function EercSdkRuntime({
   appOrigin,
   circuitOrigin,
+  circuitUrlsForSdk,
+  circuitsLoading,
+  registerCircuitsReady,
+  circuitsError,
   decryptionKey,
   sessionReady,
   contractAddress,
@@ -73,16 +85,11 @@ function EercSdkRuntime({
   const publicClient = usePublicClient({ chainId: avalancheFuji.id });
   const { data: walletClient } = useWalletClient();
 
-  const circuitUrls = useMemo(
-    () => circuitUrlsWithAppOrigin(circuitOrigin),
-    [circuitOrigin],
-  );
-
   const sdk = useEERC(
     publicClient as CompatiblePublicClient,
     (walletClient ?? publicClient) as CompatibleWalletClient,
     contractAddress,
-    circuitUrls,
+    circuitUrlsForSdk,
     decryptionKey,
   );
 
@@ -94,6 +101,9 @@ function EercSdkRuntime({
       walletConnected: isConnected,
       hasDecryptionKey: Boolean(decryptionKey),
       sessionReady,
+      circuitsLoading,
+      registerCircuitsReady,
+      circuitsError,
       persistDecryptionKey,
       refreshDecryptionKey,
     }),
@@ -104,6 +114,9 @@ function EercSdkRuntime({
       isConnected,
       decryptionKey,
       sessionReady,
+      circuitsLoading,
+      registerCircuitsReady,
+      circuitsError,
       persistDecryptionKey,
       refreshDecryptionKey,
     ],
@@ -124,6 +137,17 @@ export function EercProvider({
   const { isConnected, address } = useAccount();
 
   const [circuitOrigin, setCircuitOrigin] = useState(appOrigin);
+  const {
+    circuitUrls: blobCircuitUrls,
+    registerCircuitsReady,
+    loading: circuitsLoading,
+    error: circuitsError,
+  } = useCircuitBlobUrls(circuitOrigin);
+  const circuitUrlsForSdk = useMemo(
+    () => blobCircuitUrls ?? circuitUrlsWithAppOrigin(circuitOrigin),
+    [blobCircuitUrls, circuitOrigin],
+  );
+
   useLayoutEffect(() => {
     const live = window.location.origin;
     setCircuitOrigin(live !== appOrigin ? live : appOrigin);
@@ -183,6 +207,10 @@ export function EercProvider({
       key={decryptionKey ?? "__no-key__"}
       appOrigin={appOrigin}
       circuitOrigin={circuitOrigin}
+      circuitUrlsForSdk={circuitUrlsForSdk}
+      circuitsLoading={circuitsLoading}
+      registerCircuitsReady={registerCircuitsReady}
+      circuitsError={circuitsError}
       decryptionKey={decryptionKey}
       sessionReady={sessionReady}
       contractAddress={contractAddress}
