@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/cello/page-header";
 import { PageShell } from "@/components/cello/page-shell";
 import { useCelloEerc } from "@/contexts/eerc-context";
 import { explorerAddressUrl } from "@/lib/explorer";
+import { isAvaxPaymentMode } from "@/lib/payment-asset";
 
 export default function RecibirPage() {
   const { address, isConnected } = useAccount();
@@ -30,7 +31,11 @@ export default function RecibirPage() {
       <PageHeader
         kicker="Recibir"
         title="Tu dirección institucional"
-        description="Compartí este 0x con quien te envíe fondos. El remitente debe estar registrado en el mismo contrato eERC."
+        description={
+          isAvaxPaymentMode()
+            ? "Compartí este 0x para recibir AVAX en Fuji. El remitente debe estar registrado en Cello."
+            : "Compartí este 0x con quien te envíe fondos. El remitente debe estar registrado en el mismo contrato eERC."
+        }
       />
 
       {!isConnected || !address ? (

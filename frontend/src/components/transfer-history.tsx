@@ -81,7 +81,7 @@ export function TransferHistory({ address, refreshKey = 0 }: TransferHistoryProp
       <div className="tx-head">
         <div>TIPO</div>
         <div>CONTRAPARTE</div>
-        <div>REF</div>
+        <div>CÓDIGO</div>
         <div>TX</div>
       </div>
       {rows.map((row) => {

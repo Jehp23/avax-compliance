@@ -1,6 +1,10 @@
 /** Variables públicas validadas en build/runtime del cliente. */
 
+export type PaymentAsset = "avax" | "eerc";
+
 export type CelloPublicEnv = {
+  paymentAsset: PaymentAsset;
+  vaultContract: `0x${string}` | null;
   eercContract: `0x${string}` | null;
   eercMode: "standalone" | "converter";
   converterErc20: `0x${string}` | null;
@@ -36,7 +40,12 @@ export function getPublicEnv(): CelloPublicEnv {
     }
   }
 
+  const paymentAsset: PaymentAsset =
+    process.env.NEXT_PUBLIC_PAYMENT_ASSET === "eerc" ? "eerc" : "avax";
+
   return {
+    paymentAsset,
+    vaultContract: readAddress("NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS"),
     eercContract: readAddress("NEXT_PUBLIC_EERC_CONTRACT_ADDRESS"),
     eercMode: mode,
     converterErc20: readAddress("NEXT_PUBLIC_CONVERTER_ERC20_ADDRESS"),

@@ -103,8 +103,16 @@ export async function POST(req: NextRequest) {
   }
 
   const db = getDb();
-  const contract =
-    body.contractAddress?.trim() || getEercContractAddress();
+  const contractRaw = body.contractAddress?.trim();
+  const contract = contractRaw
+    ? contractRaw.toLowerCase()
+    : (() => {
+        try {
+          return getEercContractAddress();
+        } catch {
+          return "native-avax";
+        }
+      })();
   const hash = txHash.toLowerCase();
 
   const existing = await db

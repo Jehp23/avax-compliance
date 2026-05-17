@@ -10,14 +10,19 @@ import { PageHeader } from "@/components/cello/page-header";
 import { PageShell } from "@/components/cello/page-shell";
 import { ZkProgress } from "@/components/zk-progress";
 import { useCelloEerc } from "@/contexts/eerc-context";
+import { useMyInstitution } from "@/hooks/use-my-institution";
 import { indexTransferOnServer } from "@/lib/index-transfer";
+import { isAvaxPaymentMode, isEercPaymentMode } from "@/lib/payment-asset";
 import { shortAddress } from "@/lib/format-address";
+import { getEercContractAddress } from "@/lib/contracts";
 
 export default function RegistroPage() {
   const router = useRouter();
   const { isConnected, address } = useAccount();
   const { sdk, persistDecryptionKey, contractAddress, hasDecryptionKey } =
     useCelloEerc();
+  const { approved: institutionOk, loading: loadingInst } =
+    useMyInstitution(address);
 
   const [institutionName, setInstitutionName] = useState("");
   const [institutionInitials, setInstitutionInitials] = useState("");
@@ -27,9 +32,10 @@ export default function RegistroPage() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const avaxMode = isAvaxPaymentMode();
   const walletDone = isConnected;
   const kycDone = kycAccepted;
-  const registered = sdk.isRegistered;
+  const registered = avaxMode ? institutionOk : sdk.isRegistered;
   const sdkReady =
     Boolean(sdk) && sdk.isInitialized && sdk.isAllDataFetched;
 
@@ -37,33 +43,70 @@ export default function RegistroPage() {
     if (!address) return;
     void fetch("/api/institutions")
       .then((r) => r.json())
-      .then((data: { institutions?: { walletAddress: string; name: string; initials: string }[] }) => {
-        const mine = data.institutions?.find(
-          (i) => i.walletAddress.toLowerCase() === address.toLowerCase(),
-        );
-        if (mine) {
-          setInstitutionName(mine.name);
-          setInstitutionInitials(mine.initials);
-        }
-      })
+      .then(
+        (data: {
+          institutions?: { walletAddress: string; name: string; initials: string }[];
+        }) => {
+          const mine = data.institutions?.find(
+            (i) => i.walletAddress.toLowerCase() === address.toLowerCase(),
+          );
+          if (mine) {
+            setInstitutionName(mine.name);
+            setInstitutionInitials(mine.initials);
+          }
+        },
+      )
       .catch(() => {});
   }, [address]);
 
   async function saveInstitution() {
-    if (!address || !institutionName.trim()) return;
-    await fetch("/api/institutions", {
+    if (!address || !institutionName.trim()) return false;
+    const res = await fetch("/api/institutions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         walletAddress: address,
         name: institutionName.trim(),
-        initials: institutionInitials.trim() || institutionName.slice(0, 2).toUpperCase(),
+        initials:
+          institutionInitials.trim() ||
+          institutionName.trim().slice(0, 2).toUpperCase(),
         kycStatus: "approved",
       }),
     });
+    return res.ok;
   }
 
-  async function handleRegister() {
+  async function handleAvaxRegister() {
+    setBusy(true);
+    setError(null);
+    setFeedback(null);
+    try {
+      if (!walletDone) {
+        setError("Conectá tu wallet en Avalanche Fuji.");
+        return;
+      }
+      if (!institutionName.trim()) {
+        setError("Indicá el nombre de la institución.");
+        return;
+      }
+      if (!kycDone) {
+        setError("Confirmá el checklist institucional.");
+        return;
+      }
+      const ok = await saveInstitution();
+      if (!ok) {
+        setError("No se pudo guardar en el directorio. Revisá DATABASE_URL.");
+        return;
+      }
+      setFeedback("Institución registrada. Ya podés enviar y recibir AVAX.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al registrar.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleEercRegister() {
     setBusy(true);
     setError(null);
     setFeedback(null);
@@ -93,27 +136,11 @@ export default function RegistroPage() {
         txHash: transactionHash,
         fromAddress: address!,
         transferType: "register",
-        contractAddress,
+        contractAddress: getEercContractAddress(),
       });
-      setFeedback(
-        `Registro exitoso. Tu clave quedó en este navegador — usá siempre la misma wallet aquí.`,
-      );
+      setFeedback(`Registro eERC exitoso · ${shortAddress(contractAddress)}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al registrar en eERC20.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleAlreadyRegistered() {
-    if (!walletDone || !institutionName.trim()) {
-      setError("Completá nombre de institución y conectá wallet.");
-      return;
-    }
-    setBusy(true);
-    try {
-      await saveInstitution();
-      setFeedback("Institución guardada. Si ya registraste antes, tu clave debe estar en este navegador.");
     } finally {
       setBusy(false);
     }
@@ -130,7 +157,11 @@ export default function RegistroPage() {
       <PageHeader
         kicker="Registro"
         title="Onboarding institucional"
-        description="Una sola vez por wallet en Fuji: KYC, registro eERC20 y clave ZK en tu navegador."
+        description={
+          avaxMode
+            ? "Registrá tu institución en Fuji para enviar AVAX nativo entre wallets verificadas."
+            : "Wallet, KYC y registro eERC20 con prueba ZK en Fuji."
+        }
       />
 
       <Feedback message={error} variant="error" />
@@ -138,7 +169,7 @@ export default function RegistroPage() {
         message={feedback}
         variant={
           feedback?.toLowerCase().includes("exitoso") ||
-          feedback?.includes("guardada")
+          feedback?.includes("registrada")
             ? "success"
             : busy
               ? "loading"
@@ -150,7 +181,7 @@ export default function RegistroPage() {
           Transacción: <TxLink hash={lastTx} />
         </p>
       ) : null}
-      {busy ? <ZkProgress /> : null}
+      {busy && isEercPaymentMode() ? <ZkProgress /> : null}
 
       <div className="fields mb-4">
         <label className="fl">
@@ -192,9 +223,11 @@ export default function RegistroPage() {
         <li className={`step ${step3Class}`}>
           <span className="step-num">{registered ? "✓" : "3"}</span>
           <div className="step-body">
-            <div className="step-name">Registro eERC20</div>
+            <div className="step-name">
+              {avaxMode ? "Alta en directorio" : "Registro eERC20"}
+            </div>
             <div className="step-meta">
-              {registered ? "Activo on-chain" : "Claves + ZK"}
+              {registered ? "Listo" : avaxMode ? "Sin ZK" : "Claves + ZK"}
             </div>
           </div>
         </li>
@@ -206,47 +239,47 @@ export default function RegistroPage() {
           checked={kycAccepted}
           onChange={(e) => setKycAccepted(e.target.checked)}
         />
-        Confirmo operar como institución autorizada (KYC demo Fuji).
+        Confirmo operar como institución autorizada (demo Fuji).
       </label>
 
       {!registered ? (
         <button
           type="button"
           className="primary-btn"
-          disabled={busy || !walletDone || !kycDone || !sdkReady}
-          onClick={handleRegister}
+          disabled={
+            busy ||
+            !walletDone ||
+            !kycDone ||
+            (!avaxMode && !sdkReady) ||
+            loadingInst
+          }
+          onClick={() =>
+            void (avaxMode ? handleAvaxRegister() : handleEercRegister())
+          }
         >
-          {busy ? "Registrando…" : "Registrar en eERC20"}
+          {busy
+            ? "Registrando…"
+            : avaxMode
+              ? "Registrar institución"
+              : "Registrar en eERC20"}
         </button>
       ) : (
-        <div className="space-y-2">
-          <button
-            type="button"
-            className="primary-btn"
-            disabled={!hasDecryptionKey}
-            onClick={() => router.push("/transferencias")}
-          >
-            {hasDecryptionKey ? "Ir a transferencias" : "Cargando clave local…"}
-          </button>
-          {!hasDecryptionKey ? (
-            <p className="text-[12px] text-[var(--text3)]">
-              Si registraste en otro dispositivo, volvé a registrar con esta wallet
-              o usá el mismo navegador donde hiciste el onboarding.
-            </p>
-          ) : null}
-          <button
-            type="button"
-            className="text-sm text-[var(--text2)] underline"
-            disabled={busy}
-            onClick={handleAlreadyRegistered}
-          >
-            Actualizar nombre en directorio
-          </button>
-        </div>
+        <button
+          type="button"
+          className="primary-btn"
+          disabled={!avaxMode && !hasDecryptionKey}
+          onClick={() => router.push("/transferencias")}
+        >
+          {avaxMode || hasDecryptionKey
+            ? "Ir a transferencias"
+            : "Cargando clave local…"}
+        </button>
       )}
 
       <div className="note mt-4" role="note">
-        Contrato {shortAddress(contractAddress)} · red Fuji testnet
+        {avaxMode
+          ? "Pagos en AVAX nativo (Fuji testnet). Necesitás AVAX para gas y monto."
+          : `Contrato eERC ${shortAddress(contractAddress)}`}
       </div>
     </PageShell>
   );

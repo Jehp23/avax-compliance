@@ -4,11 +4,15 @@ import { useAccount } from "wagmi";
 import { avalancheFuji } from "wagmi/chains";
 
 import { useCelloEerc } from "@/contexts/eerc-context";
+import { useMyInstitution } from "@/hooks/use-my-institution";
+import { isAvaxPaymentMode } from "@/lib/payment-asset";
 import { shortAddress } from "@/lib/format-address";
 
 export function WalletStatus() {
   const { address, isConnected, chainId } = useAccount();
   const { sdk, hasDecryptionKey } = useCelloEerc();
+  const { approved } = useMyInstitution(address);
+  const avaxMode = isAvaxPaymentMode();
 
   const rows = [
     {
@@ -26,16 +30,26 @@ export function WalletStatus() {
       value: chainId === avalancheFuji.id ? "Fuji" : "incorrecta",
       ok: chainId === avalancheFuji.id,
     },
-    {
-      key: "eERC",
-      value: sdk.isRegistered ? "registrado" : "pendiente",
-      ok: sdk.isRegistered,
-    },
-    {
-      key: "Clave ZK",
-      value: hasDecryptionKey ? "en sesión" : "falta",
-      ok: hasDecryptionKey,
-    },
+    avaxMode
+      ? {
+          key: "Institución",
+          value: approved ? "registrada" : "pendiente",
+          ok: approved,
+        }
+      : {
+          key: "eERC",
+          value: sdk.isRegistered ? "registrado" : "pendiente",
+          ok: sdk.isRegistered,
+        },
+    ...(avaxMode
+      ? []
+      : [
+          {
+            key: "Clave ZK",
+            value: hasDecryptionKey ? "en sesión" : "falta",
+            ok: hasDecryptionKey,
+          },
+        ]),
   ];
 
   return (

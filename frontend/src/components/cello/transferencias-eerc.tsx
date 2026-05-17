@@ -2,53 +2,39 @@
 
 import Link from "next/link";
 import { type FormEvent, useState } from "react";
-import {
-  formatEther,
-  isAddress,
-  parseEther,
-} from "viem";
-import {
-  useAccount,
-  useBalance,
-  useSendTransaction,
-  useWaitForTransactionReceipt,
-} from "wagmi";
+import { formatUnits, isAddress, parseUnits } from "viem";
+import { useAccount } from "wagmi";
 
 import { Feedback } from "@/components/feedback";
 import { TxLink } from "@/components/tx-link";
 import { TransferHistory } from "@/components/transfer-history";
-import { AuditCodeCard } from "@/components/cello/audit-code-card";
+import { EncBadge } from "@/components/cello/enc-badge";
 import { PageHeader } from "@/components/cello/page-header";
 import { PageShell } from "@/components/cello/page-shell";
 import { WalletStatus } from "@/components/cello/wallet-status";
+import { ZkProgress } from "@/components/zk-progress";
+import {
+  useEncryptedBalanceHook,
+  useCelloEerc,
+} from "@/contexts/eerc-context";
+import { AuditCodeCard } from "@/components/cello/audit-code-card";
 import { useApprovedInstitutions } from "@/hooks/use-approved-institutions";
-import { useMyInstitution } from "@/hooks/use-my-institution";
-import { getPublicEnv } from "@/lib/env";
+import { getEercContractAddress } from "@/lib/contracts";
+import { loadDecryptionKey } from "@/lib/decryption-key-storage";
+import { formatTransferError } from "@/lib/format-transfer-error";
 import { indexTransferOnServer } from "@/lib/index-transfer";
-import { isAvaxPaymentMode } from "@/lib/payment-asset";
 import { shortAddress } from "@/lib/format-address";
-import { TransferenciasEerc } from "@/components/cello/transferencias-eerc";
 
-export default function TransferenciasPage() {
-  if (!isAvaxPaymentMode()) {
-    return <TransferenciasEerc />;
-  }
-  return <TransferenciasAvax />;
-}
-
-function TransferenciasAvax() {
+export function TransferenciasEerc() {
   const { address, isConnected } = useAccount();
-  const env = getPublicEnv();
-  const { data: balance, refetch: refetchBalance } = useBalance({ address });
-  const { sendTransactionAsync } = useSendTransaction();
-  const { approved: myInstitutionOk, loading: loadingMe } =
-    useMyInstitution(address);
+  const { sdk, hasDecryptionKey, persistDecryptionKey } = useCelloEerc();
+  const balance = useEncryptedBalanceHook();
+  const contract = getEercContractAddress();
 
   const [destination, setDestination] = useState("");
   const [amount, setAmount] = useState("");
   const [reference, setReference] = useState("");
   const [busy, setBusy] = useState(false);
-  const [pendingHash, setPendingHash] = useState<`0x${string}` | null>(null);
   const [lastTx, setLastTx] = useState<`0x${string}` | null>(null);
   const [historyKey, setHistoryKey] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -57,12 +43,12 @@ function TransferenciasAvax() {
 
   const { institutions: counterparties, loading: loadingCp } =
     useApprovedInstitutions(address);
-
-  const { isLoading: waitingReceipt, isSuccess: receiptOk } =
-    useWaitForTransactionReceipt({ hash: pendingHash ?? undefined });
-
-  const avaxBal =
-    balance?.value != null ? formatEther(balance.value) : "—";
+  const decimals = balance.decimals ? Number(balance.decimals) : 18;
+  const decrypted = balance.decryptedBalance ?? 0n;
+  const bal =
+    hasDecryptionKey && sdk.isRegistered
+      ? formatUnits(decrypted, decimals)
+      : "—";
 
   function pickCounterparty(addr?: `0x${string}`) {
     if (addr) {
@@ -76,113 +62,125 @@ function TransferenciasAvax() {
     setBusy(true);
     setError(null);
     setFeedback(null);
-    setLastAuditCode(null);
 
     try {
       if (!isConnected || !address) {
-        setError("Conectá tu wallet en Avalanche Fuji.");
+        setError("Conectá tu wallet en Fuji.");
         return;
       }
-      if (!myInstitutionOk) {
-        setError("Completá tu registro institucional en /registro.");
+      if (!sdk.isRegistered) {
+        setError("Completá el registro en /registro antes de transferir.");
         return;
+      }
+      if (!loadDecryptionKey() && !hasDecryptionKey) {
+        setError(
+          "Falta la clave ZK. Completá el registro en /registro con esta wallet (mismo navegador).",
+        );
+        return;
+      }
+      const storedKey = loadDecryptionKey();
+      if (storedKey && !hasDecryptionKey) {
+        persistDecryptionKey(storedKey);
       }
       const trimmed = destination.trim();
       if (!isAddress(trimmed)) {
         setError("Destino inválido: dirección 0x completa.");
         return;
       }
-      if (trimmed.toLowerCase() === address.toLowerCase()) {
-        setError("No podés transferir a tu misma wallet.");
-        return;
-      }
-
-      const destApproved = counterparties.some(
-        (i) => i.walletAddress.toLowerCase() === trimmed.toLowerCase(),
-      );
-      if (!destApproved) {
+      const { isRegistered: destOk } = await sdk.isAddressRegistered(trimmed);
+      if (!destOk) {
         setError(
-          "El destinatario debe estar registrado en Cello (/registro). Elegí una contraparte de la lista.",
+          "El destinatario debe estar registrado en eERC20. Pedile que complete /registro en Cello.",
         );
         return;
       }
-
+      const destInDirectory = counterparties.some(
+        (i) => i.walletAddress.toLowerCase() === trimmed.toLowerCase(),
+      );
+      if (counterparties.length > 0 && !destInDirectory) {
+        setError(
+          "El destino no está en el directorio de instituciones aprobadas. Elegí una contraparte de la lista.",
+        );
+        return;
+      }
       if (!amount.trim()) {
-        setError("Indicá un monto en AVAX.");
+        setError("Indicá un monto.");
         return;
       }
 
       const amountNormalized = amount.trim().replace(",", ".");
-      let value: bigint;
+      let parsed: bigint;
       try {
-        value = parseEther(amountNormalized);
+        parsed = parseUnits(amountNormalized, decimals);
       } catch {
-        setError("Monto inválido. Ejemplo: 0.01 o 0.1");
+        setError(
+          "Monto con formato inválido. Usá solo números y punto decimal (ej. 100 o 10.5).",
+        );
         return;
       }
-      if (value <= 0n) {
+      if (parsed <= 0n) {
         setError("El monto debe ser mayor que cero.");
         return;
       }
-
-      const gasReserve = parseEther("0.002");
-      const current = balance?.value ?? 0n;
-      if (current < value + gasReserve) {
+      if (!balance.encryptedBalance?.length) {
         setError(
-          `Saldo insuficiente: tenés ${formatEther(current)} AVAX (dejá ~0.002 para gas).`,
+          "No hay saldo cifrado cargado. Recargá la clave en /registro y esperá unos segundos.",
+        );
+        return;
+      }
+      if (decrypted < parsed) {
+        setError(
+          `Saldo insuficiente: tenés ${formatUnits(decrypted, decimals)} ${sdk.symbol || "TOKEN"} y querés enviar ${amountNormalized}.`,
         );
         return;
       }
 
-      setFeedback("Enviando AVAX en Fuji…");
-      const hash = await sendTransactionAsync({
-        to: trimmed,
-        value,
-      });
-      setPendingHash(hash);
-      setFeedback("Esperando confirmación en la red…");
-
+      setFeedback("Generando prueba ZK (1–2 min). No cierres la pestaña…");
+      const { transactionHash } = await balance.privateTransfer(
+        trimmed,
+        parsed,
+        reference.trim() || undefined,
+      );
+      balance.refetchBalance();
+      setLastTx(transactionHash as `0x${string}`);
+      setLastAuditCode(null);
+      setHistoryKey((k) => k + 1);
       const indexed = await indexTransferOnServer({
-        txHash: hash,
+        txHash: transactionHash,
         fromAddress: address,
         toAddress: trimmed,
         transferType: "transfer",
         reference: reference.trim() || undefined,
-        contractAddress: env.vaultContract ?? undefined,
+        contractAddress: contract,
         amountDisplay: amountNormalized,
-        tokenSymbol: "AVAX",
+        tokenSymbol: sdk.symbol || "TOKEN",
       });
       const code =
         indexed?.auditAccessCode ?? indexed?.transfer?.auditAccessCode;
       if (code) setLastAuditCode(code);
-
-      setLastTx(hash);
-      setHistoryKey((k) => k + 1);
-      setAmount("");
       setFeedback(
         code
           ? `Transferencia enviada. Código de auditoría: ${code}`
-          : "Transferencia AVAX confirmada.",
+          : "Transferencia enviada correctamente.",
       );
-      void refetchBalance();
+      setAmount("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo enviar AVAX.");
+      setError(formatTransferError(err));
     } finally {
       setBusy(false);
-      setPendingHash(null);
     }
   }
-
-  const formBusy = busy || waitingReceipt;
 
   return (
     <PageShell width="full">
       <div className="app-layout">
         <aside aria-label="Resumen">
           <div className="bal-block">
-            <div className="bal-label">Saldo AVAX</div>
-            <div className="bal-val">{avaxBal}</div>
-            <div className="bal-currency">Avalanche Fuji · nativo</div>
+            <div className="bal-label">Saldo descifrado</div>
+            <div className="bal-val">{bal}</div>
+            <div className="bal-currency">
+              {sdk.symbol || "eERC"} · {shortAddress(contract)}
+            </div>
           </div>
           <WalletStatus />
         </aside>
@@ -190,14 +188,15 @@ function TransferenciasAvax() {
         <div className="main">
           <PageHeader
             kicker="Transferencias"
-            title="Enviar AVAX"
-            description="Transferencia nativa en Fuji entre instituciones registradas. Código de auditoría al confirmar."
+            title="Nueva transferencia"
+            description="Montos privados on-chain con copia auditada para el regulador."
+            badge={<EncBadge />}
           />
 
           <Feedback message={error} variant="error" />
-          {!loadingMe && !myInstitutionOk ? (
+          {sdk.isRegistered && !hasDecryptionKey ? (
             <Feedback
-              message="Registrate en /registro antes de transferir."
+              message="Completá /registro en este navegador para cargar tu clave ZK."
               variant="info"
             />
           ) : null}
@@ -207,9 +206,10 @@ function TransferenciasAvax() {
           <Feedback
             message={feedback}
             variant={
-              feedback?.includes("enviada") || receiptOk
+              feedback?.toLowerCase().includes("correctamente") ||
+              feedback?.includes("enviada")
                 ? "success"
-                : formBusy
+                : busy
                   ? "loading"
                   : "info"
             }
@@ -219,16 +219,17 @@ function TransferenciasAvax() {
               Transacción: <TxLink hash={lastTx} />
             </p>
           ) : null}
+          {busy ? <ZkProgress /> : null}
 
           <form className="form-card" onSubmit={onSubmit}>
             <div className="form-card-head">
               <div className="form-card-title">Datos</div>
-              <div className="form-card-meta">AVAX · Fuji</div>
+              <div className="form-card-meta">ZK · eERC</div>
             </div>
             <div className="fields">
               <div className="fl">
                 <label className="fl-label" htmlFor="dest-address">
-                  Destino (institución registrada)
+                  Destino (0x…)
                 </label>
                 <input
                   id="dest-address"
@@ -254,9 +255,9 @@ function TransferenciasAvax() {
                     inputMode="decimal"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.01"
+                    placeholder="0"
                   />
-                  <span className="currency-sel">AVAX</span>
+                  <span className="currency-sel">{sdk.symbol || "TOKEN"}</span>
                 </div>
               </div>
               <div className="fl">
@@ -276,9 +277,9 @@ function TransferenciasAvax() {
               <button
                 type="submit"
                 className="submit-btn"
-                disabled={formBusy || !myInstitutionOk}
+                disabled={busy || !sdk.isRegistered}
               >
-                {formBusy ? "Enviando…" : "Transferir AVAX"}
+                {busy ? "Enviando…" : "Transferir"}
               </button>
             </div>
           </form>
@@ -292,10 +293,10 @@ function TransferenciasAvax() {
             <p className="panel-label">Contrapartes</p>
             <div className="cp-list">
               {loadingCp ? (
-                <p className="panel-text text-sm">Cargando…</p>
+                <p className="panel-text text-sm">Cargando instituciones…</p>
               ) : counterparties.length === 0 ? (
                 <p className="panel-text text-sm">
-                  Tu amigo debe registrarse en /registro para aparecer acá.
+                  Aún no hay otras instituciones. Compartí Cello para que se registren en /registro.
                 </p>
               ) : (
                 counterparties.map((cp) => (
