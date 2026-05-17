@@ -76,7 +76,7 @@ function AuditoriaContent() {
 
   return (
     <>
-      <form onSubmit={onSubmit} className="panel mb-6 max-w-lg">
+      <form onSubmit={onSubmit} className="panel audit-search-form">
         <label className="fl">
           <span className="fl-label">Código de auditoría</span>
           <input
@@ -87,19 +87,24 @@ function AuditoriaContent() {
             autoComplete="off"
           />
         </label>
-        <button type="submit" className="primary-btn mt-4" disabled={busy}>
-          {busy ? "Consultando…" : "Consultar transferencia"}
-        </button>
+        <div className="audit-search-form__actions">
+          <button type="submit" className="primary-btn" disabled={busy}>
+            {busy ? "Consultando…" : "Consultar transferencia"}
+          </button>
+        </div>
       </form>
 
       <Feedback message={error} variant="error" />
 
       {row ? (
-        <div className="panel" role="region" aria-label="Detalle auditado">
-          <p className="panel-label mb-4">
-            Transferencia <span className="font-mono">{row.auditAccessCode}</span>
-          </p>
-          <dl className="space-y-3 text-sm">
+        <div className="panel audit-result" role="region" aria-label="Detalle auditado">
+          <header className="audit-result__head">
+            <p className="panel-label">Transferencia verificada</p>
+            <p className="audit-result__code" aria-label="Código de auditoría">
+              {row.auditAccessCode}
+            </p>
+          </header>
+          <dl className="audit-result__details">
             <AuditDl
               label="Monto (declarado)"
               value={
@@ -143,7 +148,7 @@ function AuditoriaContent() {
               </dd>
             </div>
           </dl>
-          <p className="mt-4 text-[11px] text-[var(--text3)]">
+          <p className="audit-result__footnote">
             En Snowtrace el monto sigue privado on-chain. Este registro es el
             comprobante institucional emitido al confirmar la transferencia.
           </p>

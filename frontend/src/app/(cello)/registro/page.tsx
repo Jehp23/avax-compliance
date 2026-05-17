@@ -330,37 +330,39 @@ export default function RegistroPage() {
               : "Registrar en eERC20"}
         </button>
       ) : (
-        <>
+        <div className="register-done">
           {showZkRecovery ? (
-            <>
+            <div className="register-done__block">
               <Feedback
                 message="Registro on-chain activo, pero falta la clave ZK en este navegador. Usá una opción de abajo para recuperarla."
                 variant="info"
               />
               <ImportDemoKey />
               <RestoreZkKey />
-            </>
+            </div>
           ) : null}
           {!avaxMode && registered && hasDecryptionKey ? (
             <SessionBackupCard highlightDownload={promptSessionBackup} />
           ) : null}
-          <button
-            type="button"
-            className="primary-btn"
-            disabled={!avaxMode && !hasDecryptionKey}
-            onClick={() => router.push("/transferencias")}
-          >
-            {avaxMode || hasDecryptionKey
-              ? "Ir a transferencias"
-              : "Recuperá la clave ZK para continuar"}
-          </button>
-        </>
+          <div className="register-done__cta">
+            <button
+              type="button"
+              className="primary-btn"
+              disabled={!avaxMode && !hasDecryptionKey}
+              onClick={() => router.push("/transferencias")}
+            >
+              {avaxMode || hasDecryptionKey
+                ? "Ir a transferencias"
+                : "Recuperá la clave ZK para continuar"}
+            </button>
+          </div>
+        </div>
       )}
 
-      <div className="note mt-4" role="note">
+      <div className="note register-footnote" role="note">
         {avaxMode
           ? "Pagos en AVAX nativo (Fuji testnet). Necesitás AVAX para gas y monto."
-          : `Contrato eERC ${shortAddress(contractAddress)}. Tras registrar, descargá el JSON de sesión como respaldo de tu clave ZK.`}
+          : `Contrato eERC ${shortAddress(contractAddress)}.`}
       </div>
     </PageShell>
   );

@@ -50,9 +50,7 @@ export function SessionBackupCard({
     try {
       const text = await file.text();
       const data = parseCelloSessionFile(text);
-      if (
-        data.walletAddress.toLowerCase() !== address.toLowerCase()
-      ) {
+      if (data.walletAddress.toLowerCase() !== address.toLowerCase()) {
         setMsg("El archivo pertenece a otra wallet. Conectá la wallet correcta.");
         return;
       }
@@ -67,21 +65,35 @@ export function SessionBackupCard({
   }
 
   return (
-    <div
-      className={`panel mt-4 ${highlightDownload ? "panel--highlight" : ""}`}
+    <section
+      className={`session-backup-card panel ${highlightDownload ? "panel--highlight" : ""}`}
+      aria-labelledby="session-backup-title"
     >
-      <p className="panel-label">Respaldo de sesión</p>
-      <p className="panel-text text-sm">
-        Descargá el JSON con tu clave ZK y datos institucionales. Lo necesitás
-        si cambiás de navegador o borrás datos del sitio.{" "}
-        <strong>No lo compartas</strong> — es equivalente a tu llave privada de
-        descifrado.
-      </p>
-      <p className="panel-text text-sm mt-2 font-mono">
-        Wallet {shortAddress(session.walletAddress as `0x${string}`)} · Contrato{" "}
-        {shortAddress(session.contractAddress as `0x${string}`)}
-      </p>
-      <div className="btn-row mt-3">
+      <header className="session-backup-card__head">
+        <p id="session-backup-title" className="panel-label">
+          Respaldo de sesión
+        </p>
+        <p className="panel-text">
+          Descargá el JSON con tu clave ZK y datos institucionales. Lo necesitás
+          si cambiás de navegador o borrás datos del sitio.
+        </p>
+        <p className="session-backup-card__warn">
+          No compartas este archivo: equivale a tu llave privada de descifrado.
+        </p>
+      </header>
+
+      <dl className="session-backup-card__meta">
+        <div className="session-backup-card__meta-row">
+          <dt>Wallet</dt>
+          <dd>{shortAddress(session.walletAddress as `0x${string}`)}</dd>
+        </div>
+        <div className="session-backup-card__meta-row">
+          <dt>Contrato</dt>
+          <dd>{shortAddress(session.contractAddress as `0x${string}`)}</dd>
+        </div>
+      </dl>
+
+      <div className="session-backup-card__actions">
         <button type="button" className="primary-btn" onClick={onDownload}>
           Descargar JSON de sesión
         </button>
@@ -100,15 +112,20 @@ export function SessionBackupCard({
           onChange={(e) => void onImportFile(e.target.files?.[0])}
         />
       </div>
-      <Feedback
-        message={msg}
-        variant={
-          msg?.toLowerCase().includes("descargado") ||
-          msg?.toLowerCase().includes("importada")
-            ? "success"
-            : "info"
-        }
-      />
-    </div>
+
+      {msg ? (
+        <div className="session-backup-card__feedback">
+          <Feedback
+            message={msg}
+            variant={
+              msg.toLowerCase().includes("descargado") ||
+              msg.toLowerCase().includes("importada")
+                ? "success"
+                : "info"
+            }
+          />
+        </div>
+      ) : null}
+    </section>
   );
 }
