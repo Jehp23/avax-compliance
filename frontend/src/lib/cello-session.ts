@@ -21,12 +21,19 @@ function normalizeAddress(addr: string): string {
   return addr.trim().toLowerCase();
 }
 
-/** Clave ZK del SDK: decimal largo (demo) o hex de 64 caracteres (registro normal). */
+/** Normaliza clave pegada (quita espacios y prefijo 0x). */
+export function normalizeDecryptionKey(key: string): string {
+  let k = key.trim().replace(/\s+/g, "");
+  if (k.startsWith("0x") || k.startsWith("0X")) k = k.slice(2);
+  return k;
+}
+
+/** Clave ZK del SDK: decimal largo (demo) o hex (típ. 32 bytes, a veces sin padding). */
 export function isValidDecryptionKey(key: string): boolean {
-  const k = key.trim();
+  const k = normalizeDecryptionKey(key);
   if (!k) return false;
   if (/^\d{20,}$/.test(k)) return true;
-  if (/^[0-9a-fA-F]{64}$/.test(k)) return true;
+  if (/^[0-9a-fA-F]{32,128}$/.test(k)) return true;
   return false;
 }
 
@@ -124,7 +131,7 @@ export function applyCelloSession(input: CelloSessionInput): void {
     v: 1,
     walletAddress: input.walletAddress,
     contractAddress: input.contractAddress,
-    decryptionKey: input.decryptionKey.trim(),
+    decryptionKey: normalizeDecryptionKey(input.decryptionKey),
     registeredAt: new Date().toISOString(),
     registerTxHash: input.registerTxHash,
     institution: input.institution,
