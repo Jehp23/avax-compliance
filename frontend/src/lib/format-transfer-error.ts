@@ -4,6 +4,14 @@ export function formatTransferError(err: unknown): string {
   const msg =
     err instanceof Error ? err.message : typeof err === "string" ? err : "";
 
+  if (/InvalidProof|invalid proof/i.test(msg)) {
+    return (
+      "La prueba ZK no coincide con el contrato desplegado (InvalidProof). " +
+      "En Vercel el build debe usar circuitos del repo EncryptedERC (npm run circuits:fetch), " +
+      "no los de la demo 3dent. Pedí un redeploy del frontend al equipo."
+    );
+  }
+
   if (/failed to fetch/i.test(msg)) {
     return (
       "Error de red al generar o enviar la transacción (Failed to fetch). " +

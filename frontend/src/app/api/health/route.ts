@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import path from "node:path";
 
 import { sql } from "drizzle-orm";
@@ -16,7 +16,12 @@ export async function GET() {
     process.cwd(),
     "public/circuits/RegistrationCircuit.wasm",
   );
-  const circuits = existsSync(circuitsPath);
+  const registrationWasmBytes = existsSync(circuitsPath)
+    ? statSync(circuitsPath).size
+    : 0;
+  /** EncryptedERC zkit ≈ 1_882_087; demo 3dent ≈ 1_881_217 */
+  const circuitsCelloOk = registrationWasmBytes >= 1_882_000;
+  const circuits = circuitsCelloOk;
 
   let database = false;
   if (isDatabaseConfigured()) {
@@ -36,6 +41,8 @@ export async function GET() {
     eercEnvConfigured: isEercConfigured(),
     eercMode: env.eercMode,
     circuits,
+    circuitsCelloOk,
+    registrationWasmBytes,
     database,
     databaseConfigured: isDatabaseConfigured(),
     timestamp: new Date().toISOString(),

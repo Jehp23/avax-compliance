@@ -20,26 +20,29 @@ export const FUJI_DEMO_ERC20 =
 export const EXPLORER_ADDRESS = "https://testnet.snowtrace.io/address/";
 export const EXPLORER_TX = "https://testnet.snowtrace.io/tx/";
 
+/** Cache-bust: debe cambiar cuando se actualicen WASM/ZKEY en public/circuits/. */
+export const CIRCUIT_ASSET_VERSION = "cello-zkit-v1";
+
 export const CIRCUIT_CONFIG = {
   register: {
-    wasm: "/circuits/RegistrationCircuit.wasm",
-    zkey: "/circuits/RegistrationCircuit.groth16.zkey",
+    wasm: `/circuits/RegistrationCircuit.wasm?v=${CIRCUIT_ASSET_VERSION}`,
+    zkey: `/circuits/RegistrationCircuit.groth16.zkey?v=${CIRCUIT_ASSET_VERSION}`,
   },
   mint: {
-    wasm: "/circuits/MintCircuit.wasm",
-    zkey: "/circuits/MintCircuit.groth16.zkey",
+    wasm: `/circuits/MintCircuit.wasm?v=${CIRCUIT_ASSET_VERSION}`,
+    zkey: `/circuits/MintCircuit.groth16.zkey?v=${CIRCUIT_ASSET_VERSION}`,
   },
   transfer: {
-    wasm: "/circuits/TransferCircuit.wasm",
-    zkey: "/circuits/TransferCircuit.groth16.zkey",
+    wasm: `/circuits/TransferCircuit.wasm?v=${CIRCUIT_ASSET_VERSION}`,
+    zkey: `/circuits/TransferCircuit.groth16.zkey?v=${CIRCUIT_ASSET_VERSION}`,
   },
   withdraw: {
-    wasm: "/circuits/WithdrawCircuit.wasm",
-    zkey: "/circuits/WithdrawCircuit.groth16.zkey",
+    wasm: `/circuits/WithdrawCircuit.wasm?v=${CIRCUIT_ASSET_VERSION}`,
+    zkey: `/circuits/WithdrawCircuit.groth16.zkey?v=${CIRCUIT_ASSET_VERSION}`,
   },
   burn: {
-    wasm: "/circuits/MintCircuit.wasm",
-    zkey: "/circuits/MintCircuit.groth16.zkey",
+    wasm: `/circuits/MintCircuit.wasm?v=${CIRCUIT_ASSET_VERSION}`,
+    zkey: `/circuits/MintCircuit.groth16.zkey?v=${CIRCUIT_ASSET_VERSION}`,
   },
 } as const;
 

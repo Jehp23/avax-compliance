@@ -7,7 +7,14 @@ export function useCircuitsReady() {
 
   useEffect(() => {
     fetch("/circuits/RegistrationCircuit.wasm", { method: "HEAD" })
-      .then((r) => setReady(r.ok))
+      .then((r) => {
+        if (!r.ok) {
+          setReady(false);
+          return;
+        }
+        const len = Number(r.headers.get("content-length") ?? 0);
+        setReady(len >= 1_882_000);
+      })
       .catch(() => setReady(false));
   }, []);
 
