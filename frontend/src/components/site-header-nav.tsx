@@ -8,7 +8,6 @@ import { getPublicEnv } from "@/lib/env";
 const BASE_NAV = [
   { href: "/registro", label: "Registro" },
   { href: "/transferencias", label: "Transferencias" },
-  { href: "/recibir", label: "Recibir" },
   { href: "/auditoria", label: "Auditoría" },
 ] as const;
 

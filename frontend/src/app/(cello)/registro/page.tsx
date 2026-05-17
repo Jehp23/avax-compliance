@@ -230,11 +230,11 @@ export default function RegistroPage() {
     <PageShell width="narrow">
       <PageHeader
         kicker="Registro"
-        title="Onboarding institucional"
+        title="Alta institucional"
         description={
           avaxMode
-            ? "Registrá tu institución en Fuji para enviar AVAX nativo entre wallets verificadas."
-            : "Wallet, KYC y registro eERC20 con prueba ZK en Fuji."
+            ? "Wallet verificada en Fuji para operar con AVAX."
+            : "Una vez: wallet, checklist y prueba ZK en el contrato Cello."
         }
       />
 
@@ -342,14 +342,11 @@ export default function RegistroPage() {
       ) : (
         <div className="register-done">
           {showZkRecovery ? (
-            <div className="register-done__block">
-              <Feedback
-                message="Registro on-chain activo, pero falta la clave ZK en este navegador. Usá una opción de abajo para recuperarla."
-                variant="info"
-              />
+            <details className="recover-details register-done__block">
+              <summary>Recuperar clave ZK en este navegador</summary>
               <ImportDemoKey />
               <RestoreZkKey />
-            </div>
+            </details>
           ) : null}
           {!avaxMode && registered && hasDecryptionKey ? (
             <SessionBackupCard highlightDownload={promptSessionBackup} />
@@ -369,11 +366,6 @@ export default function RegistroPage() {
         </div>
       )}
 
-      <div className="note register-footnote" role="note">
-        {avaxMode
-          ? "Pagos en AVAX nativo (Fuji testnet). Necesitás AVAX para gas y monto."
-          : `Contrato eERC ${shortAddress(contractAddress)}.`}
-      </div>
     </PageShell>
   );
 }

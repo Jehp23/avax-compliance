@@ -8,22 +8,18 @@ import { useAccount } from "wagmi";
 import { Feedback } from "@/components/feedback";
 import { TxLink } from "@/components/tx-link";
 import { TransferHistory } from "@/components/transfer-history";
-import { EncBadge } from "@/components/cello/enc-badge";
+import { AuditCodeCard } from "@/components/cello/audit-code-card";
+import { CounterpartiesChips } from "@/components/cello/counterparties-chips";
+import { ImportDemoKey } from "@/components/cello/import-demo-key";
 import { PageHeader } from "@/components/cello/page-header";
 import { PageShell } from "@/components/cello/page-shell";
-import { WalletStatus } from "@/components/cello/wallet-status";
+import { RestoreZkKey } from "@/components/cello/restore-zk-key";
 import { ZkProgress } from "@/components/zk-progress";
 import {
   useEncryptedBalanceHook,
   useCelloEerc,
 } from "@/contexts/eerc-context";
-import { AuditCodeCard } from "@/components/cello/audit-code-card";
-import { CounterpartiesPanel } from "@/components/cello/counterparties-panel";
-import { ImportDemoKey } from "@/components/cello/import-demo-key";
-import { RestoreZkKey } from "@/components/cello/restore-zk-key";
-import { isEercConverterMode } from "@/lib/eerc-mode";
 import { useApprovedInstitutions } from "@/hooks/use-approved-institutions";
-import { loadCelloSession } from "@/lib/cello-session";
 import { loadDecryptionKey } from "@/lib/decryption-key-storage";
 import { formatTransferError } from "@/lib/format-transfer-error";
 import { indexTransferOnServer } from "@/lib/index-transfer";
@@ -36,12 +32,6 @@ export function TransferenciasEerc() {
   const balance = useEncryptedBalanceHook();
   const contract = contractAddress;
   const tokenLabel = sdk.symbol || "CELL";
-  const session = address ? loadCelloSession() : null;
-  const sessionContractMismatch =
-    session &&
-    address &&
-    session.walletAddress === address.toLowerCase() &&
-    session.contractAddress !== contract.toLowerCase();
 
   const [destination, setDestination] = useState("");
   const [amount, setAmount] = useState("");
@@ -86,18 +76,14 @@ export function TransferenciasEerc() {
         return;
       }
       if (!sdk.isRegistered) {
-        setError(
-          "Completá el onboarding institucional (menú Registro) antes de transferir.",
-        );
+        setError("Completá el registro en la sección Registro.");
         return;
       }
       if (
         !loadDecryptionKey(address, contractAddress) &&
         !hasDecryptionKey
       ) {
-        setError(
-          "Falta la clave ZK. Completá el onboarding en Registro con esta wallet (mismo navegador).",
-        );
+        setError("Falta la clave ZK. Volvé a Registro en este navegador.");
         return;
       }
       const storedKey = loadDecryptionKey(address, contractAddress);
@@ -111,18 +97,14 @@ export function TransferenciasEerc() {
       }
       const { isRegistered: destOk } = await sdk.isAddressRegistered(trimmed);
       if (!destOk) {
-        setError(
-          "El destinatario debe estar registrado en eERC20 y en el directorio de Cello.",
-        );
+        setError("El destinatario debe estar registrado en Cello.");
         return;
       }
       const destInDirectory = counterparties.some(
         (i) => i.walletAddress.toLowerCase() === trimmed.toLowerCase(),
       );
       if (counterparties.length > 0 && !destInDirectory) {
-        setError(
-          "El destino no está en el directorio de instituciones aprobadas. Elegí una contraparte de la lista.",
-        );
+        setError("Elegí una institución de la lista o agregala al directorio.");
         return;
       }
       if (!amount.trim()) {
@@ -135,9 +117,7 @@ export function TransferenciasEerc() {
       try {
         parsed = parseUnits(amountNormalized, decimals);
       } catch {
-        setError(
-          "Monto con formato inválido. Usá solo números y punto decimal (ej. 100 o 10.5).",
-        );
+        setError("Monto inválido. Ejemplo: 100 o 10.5");
         return;
       }
       if (parsed <= 0n) {
@@ -145,19 +125,17 @@ export function TransferenciasEerc() {
         return;
       }
       if (!balance.encryptedBalance?.length) {
-        setError(
-          "No hay saldo cifrado cargado. Volvé a Registro para cargar la clave ZK y esperá unos segundos.",
-        );
+        setError("No hay saldo cifrado. Recargá la página tras el registro.");
         return;
       }
       if (decrypted < parsed) {
         setError(
-          `Saldo insuficiente: tenés ${formatUnits(decrypted, decimals)} ${sdk.symbol || "TOKEN"} y querés enviar ${amountNormalized}.`,
+          `Saldo insuficiente (${formatUnits(decrypted, decimals)} ${tokenLabel}).`,
         );
         return;
       }
 
-      setFeedback("Generando prueba ZK (1–2 min). No cierres la pestaña…");
+      setFeedback("Generando prueba ZK (1–2 min)…");
       const { transactionHash } = await balance.privateTransfer(
         trimmed,
         parsed,
@@ -175,15 +153,13 @@ export function TransferenciasEerc() {
         reference: reference.trim() || undefined,
         contractAddress: contract,
         amountDisplay: amountNormalized,
-        tokenSymbol: sdk.symbol || "TOKEN",
+        tokenSymbol: sdk.symbol || "CELL",
       });
       const code =
         indexed?.auditAccessCode ?? indexed?.transfer?.auditAccessCode;
       if (code) setLastAuditCode(code);
       setFeedback(
-        code
-          ? `Transferencia enviada. Código de auditoría: ${code}`
-          : "Transferencia enviada correctamente.",
+        code ? `Enviado · código ${code}` : "Transferencia confirmada.",
       );
       setAmount("");
     } catch (err) {
@@ -194,163 +170,128 @@ export function TransferenciasEerc() {
   }
 
   return (
-    <PageShell width="full">
-      <div className="app-layout">
-        <aside aria-label="Resumen">
-          <div className="bal-block">
-            <div className="bal-label">Saldo descifrado</div>
-            <div className="bal-val">{bal}</div>
-            <div className="bal-currency">
-              {sdk.symbol || "eERC"} · {shortAddress(contract)}
-            </div>
-          </div>
-          <WalletStatus />
-        </aside>
+    <PageShell width="narrow">
+      <PageHeader
+        kicker="Transferencias"
+        title="Enviar CELL"
+        description="Monto privado on-chain con traza auditada para el regulador."
+      />
 
-        <div className="main">
-          <PageHeader
-            kicker="Transferencias"
-            title="Nueva transferencia"
-            description="Montos privados on-chain con copia auditada para el regulador."
-            badge={<EncBadge />}
-          />
-
-          <Feedback message={error} variant="error" />
-          {sdk.isRegistered && !hasDecryptionKey ? (
-            <>
-              <Feedback
-                message="Falta la clave ZK en este navegador. Recuperala abajo o en Registro."
-                variant="info"
-              />
-              <ImportDemoKey />
-              <RestoreZkKey />
-            </>
-          ) : null}
-          {sessionContractMismatch ? (
-            <Feedback
-              message={`Tu sesión guardada es del contrato ${shortAddress(session.contractAddress as `0x${string}`)}, pero la app usa ${shortAddress(contract)}. Volvé a Registro en este contrato o importá un JSON de sesión actualizado.`}
-              variant="info"
-            />
-          ) : null}
-          {showZeroBalanceHint ? (
-            <div className="panel zero-balance-hint">
-              <p className="panel-label">Saldo {tokenLabel} en cero</p>
-              <p className="panel-text text-sm">
-                El registro eERC solo habilita la wallet en{" "}
-                <strong>{shortAddress(contract)}</strong>; no acredita tokens. En
-                standalone el operador hace <strong>privateMint</strong> a tu
-                dirección, o recibís una transferencia desde otra institución en el
-                mismo contrato.
-              </p>
-              {isEercConverterMode() ? (
-                <p className="panel-text text-sm mt-2">
-                  En modo converter cargá saldo en{" "}
-                  <Link href="/cargar" className="underline">
-                    Cargar
-                  </Link>
-                  .
-                </p>
-              ) : (
-                <p className="panel-text text-sm mt-2">
-                  Si te registraste recién en este contrato, pedí al equipo el mint de
-                  demo.
-                </p>
-              )}
-            </div>
-          ) : null}
-          {lastAuditCode ? (
-            <AuditCodeCard auditAccessCode={lastAuditCode} txHash={lastTx} />
-          ) : null}
-          <Feedback
-            message={feedback}
-            variant={
-              feedback?.toLowerCase().includes("correctamente") ||
-              feedback?.includes("enviada")
-                ? "success"
-                : busy
-                  ? "loading"
-                  : "info"
-            }
-          />
-          {lastTx ? (
-            <p className="tx-feedback">
-              Transacción: <TxLink hash={lastTx} />
-            </p>
-          ) : null}
-          {busy ? <ZkProgress /> : null}
-
-          <form className="form-card" onSubmit={onSubmit}>
-            <div className="form-card-head">
-              <div className="form-card-title">Datos</div>
-              <div className="form-card-meta">ZK · eERC</div>
-            </div>
-            <div className="fields">
-              <div className="fl">
-                <label className="fl-label" htmlFor="dest-address">
-                  Destino (0x…)
-                </label>
-                <input
-                  id="dest-address"
-                  className="fl-input"
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  placeholder="0x…"
-                  autoComplete="off"
-                />
-              </div>
-              <div className="fl">
-                <span className="fl-label" id="amount-label">
-                  Monto
-                </span>
-                <div
-                  className="amt-row"
-                  role="group"
-                  aria-labelledby="amount-label"
-                >
-                  <input
-                    className="fl-input lg"
-                    style={{ flex: 1 }}
-                    inputMode="decimal"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0"
-                  />
-                  <span className="currency-sel">{sdk.symbol || "TOKEN"}</span>
-                </div>
-              </div>
-              <div className="fl">
-                <label className="fl-label" htmlFor="tx-ref">
-                  Referencia
-                </label>
-                <input
-                  id="tx-ref"
-                  className="fl-input"
-                  value={reference}
-                  onChange={(e) => setReference(e.target.value)}
-                  placeholder="Opcional"
-                />
-              </div>
-            </div>
-            <div className="form-footer">
-              <button
-                type="submit"
-                className="submit-btn"
-                disabled={busy || !sdk.isRegistered}
-              >
-                {busy ? "Enviando…" : "Transferir"}
-              </button>
-            </div>
-          </form>
-
-          <h3 className="section-label">Historial</h3>
-          <TransferHistory address={address} refreshKey={historyKey} />
+      <div className="transfer-stack">
+        <div className="balance-hero" aria-live="polite">
+          <p className="balance-hero-label">Saldo disponible</p>
+          <p className="balance-hero-val">
+            {bal} <span className="balance-hero-unit">{tokenLabel}</span>
+          </p>
+          <p className="balance-hero-meta">{shortAddress(contract)} · Fuji</p>
         </div>
 
-        <CounterpartiesPanel
-          institutions={counterparties}
-          loading={loadingCp}
-          onSelect={pickCounterparty}
+        <Feedback message={error} variant="error" />
+        {showZeroBalanceHint ? (
+          <Feedback
+            message="Saldo en cero: pedí un mint al operador o recibí una transferencia."
+            variant="info"
+          />
+        ) : null}
+        {sdk.isRegistered && !hasDecryptionKey ? (
+          <details className="recover-details">
+            <summary>Recuperar clave ZK</summary>
+            <ImportDemoKey />
+            <RestoreZkKey />
+          </details>
+        ) : null}
+        {lastAuditCode ? (
+          <AuditCodeCard auditAccessCode={lastAuditCode} txHash={lastTx} />
+        ) : null}
+        <Feedback
+          message={feedback}
+          variant={
+            feedback?.includes("confirmada") || feedback?.includes("Enviado")
+              ? "success"
+              : busy
+                ? "loading"
+                : "info"
+          }
         />
+        {lastTx ? (
+          <p className="tx-feedback tx-feedback--center">
+            <TxLink hash={lastTx} />
+          </p>
+        ) : null}
+        {busy ? <ZkProgress /> : null}
+
+        <form className="form-card" onSubmit={onSubmit}>
+          <div className="fields">
+            <div className="fl">
+              <label className="fl-label" htmlFor="dest-address">
+                Destinatario
+              </label>
+              <input
+                id="dest-address"
+                className="fl-input font-mono"
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+                placeholder="0x…"
+                autoComplete="off"
+              />
+              <CounterpartiesChips
+                institutions={counterparties}
+                loading={loadingCp}
+                onSelect={pickCounterparty}
+              />
+            </div>
+            <div className="fl">
+              <label className="fl-label" htmlFor="amount">
+                Monto ({tokenLabel})
+              </label>
+              <input
+                id="amount"
+                className="fl-input lg"
+                inputMode="decimal"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0"
+              />
+            </div>
+            <div className="fl">
+              <label className="fl-label" htmlFor="tx-ref">
+                Referencia <span className="fl-optional">opcional</span>
+              </label>
+              <input
+                id="tx-ref"
+                className="fl-input"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                placeholder="Pago proveedor"
+              />
+            </div>
+          </div>
+          <div className="form-footer">
+            <button
+              type="submit"
+              className="submit-btn submit-btn--full"
+              disabled={busy || !sdk.isRegistered}
+            >
+              {busy ? "Enviando…" : "Transferir"}
+            </button>
+          </div>
+        </form>
+
+        <section
+          className="transfer-history-section"
+          aria-labelledby="hist-label"
+        >
+          <h2 id="hist-label" className="section-label section-label--center">
+            Historial
+          </h2>
+          <TransferHistory address={address} refreshKey={historyKey} />
+        </section>
+
+        <p className="page-foot-link">
+          <Link href="/recibir">Tu dirección para recibir</Link>
+          {" · "}
+          <Link href="/auditoria">Consultar código de auditoría</Link>
+        </p>
       </div>
     </PageShell>
   );

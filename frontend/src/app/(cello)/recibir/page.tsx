@@ -7,7 +7,6 @@ import { Feedback } from "@/components/feedback";
 import { PageHeader } from "@/components/cello/page-header";
 import { PageShell } from "@/components/cello/page-shell";
 import { useCelloEerc } from "@/contexts/eerc-context";
-import { useMyInstitution } from "@/hooks/use-my-institution";
 import { explorerAddressUrl } from "@/lib/explorer";
 import { isAvaxPaymentMode } from "@/lib/payment-asset";
 
@@ -15,8 +14,6 @@ export default function RecibirPage() {
   const { address, isConnected } = useAccount();
   const { sdk } = useCelloEerc();
   const avaxMode = isAvaxPaymentMode();
-  const { approved: institutionOk, loading: loadingInstitution } =
-    useMyInstitution(address);
   const [copyMsg, setCopyMsg] = useState<string | null>(null);
 
   async function copyAddress() {
@@ -24,9 +21,9 @@ export default function RecibirPage() {
     setCopyMsg(null);
     try {
       await navigator.clipboard.writeText(address);
-      setCopyMsg("Dirección copiada al portapapeles.");
+      setCopyMsg("Copiado.");
     } catch {
-      setCopyMsg("No se pudo copiar. Seleccioná el texto manualmente.");
+      setCopyMsg("No se pudo copiar.");
     }
   }
 
@@ -34,22 +31,15 @@ export default function RecibirPage() {
     <PageShell width="narrow">
       <PageHeader
         kicker="Recibir"
-        title="Dirección para cobros"
-        description={
-          avaxMode
-            ? "Compartí esta dirección para recibir AVAX en Fuji. Los pagos deben originarse desde una institución verificada en Cello."
-            : "Compartí esta dirección para recibir fondos cifrados. El remitente debe estar registrado en el mismo contrato eERC."
-        }
+        title="Tu dirección"
+        description="Compartila para que otra institución te envíe CELL en Fuji."
       />
 
       {!isConnected || !address ? (
-        <Feedback
-          message="Conectá tu wallet en Fuji para ver tu dirección."
-          variant="info"
-        />
+        <Feedback message="Conectá tu wallet en Fuji." variant="info" />
       ) : (
         <div className="receive-card">
-          <p className="receive-label">Dirección en Fuji</p>
+          <p className="receive-label">Wallet en Fuji</p>
           <div className="receive-addr">{address}</div>
           <Feedback
             message={copyMsg}
@@ -57,7 +47,7 @@ export default function RecibirPage() {
           />
           <div className="btn-row">
             <button type="button" className="primary-btn" onClick={copyAddress}>
-              Copiar dirección
+              Copiar
             </button>
             <a
               href={explorerAddressUrl(address)}
@@ -71,37 +61,14 @@ export default function RecibirPage() {
         </div>
       )}
 
-      <div className="note mt-6" role="note">
-        {avaxMode ? (
-          <>
-            Estado en Cello:{" "}
-            <span
-              className={
-                loadingInstitution
-                  ? "status-warn"
-                  : institutionOk
-                    ? "status-ok"
-                    : "status-warn"
-              }
-            >
-              {loadingInstitution
-                ? "verificando…"
-                : institutionOk
-                  ? "institución verificada"
-                  : "onboarding pendiente (menú Registro)"}
-            </span>
-          </>
-        ) : (
-          <>
-            Registro eERC:{" "}
-            <span className={sdk.isRegistered ? "status-ok" : "status-warn"}>
-              {sdk.isRegistered ? "activo" : "pendiente (menú Registro)"}
-            </span>
-            {" · "}
-            Token: {sdk.symbol || "eERC"}
-          </>
-        )}
-      </div>
+      {!avaxMode && isConnected ? (
+        <p className="receive-status">
+          eERC:{" "}
+          <span className={sdk.isRegistered ? "status-ok" : "status-warn"}>
+            {sdk.isRegistered ? "registrado" : "pendiente"}
+          </span>
+        </p>
+      ) : null}
     </PageShell>
   );
 }
