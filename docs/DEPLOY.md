@@ -25,7 +25,8 @@ Ver detalle: [avalanche-back/docs/DEPLOY-EERC.md](../avalanche-back/docs/DEPLOY-
 
 Ver detalle: [frontend/docs/DEPLOY.md](../frontend/docs/DEPLOY.md)
 
-- [ ] Crear proyecto en [Vercel](https://vercel.com) apuntando a `frontend/` (root del subproyecto)
+- [ ] Crear proyecto en [Vercel](https://vercel.com)
+- [ ] **Root Directory** = `frontend` (recomendado) **o** raíz del repo con `vercel.json` en la raíz (workspaces)
 - [ ] Variables de entorno en Vercel (sección siguiente)
 - [ ] Deploy → verificar `https://<dominio>/api/health` → `"circuits": true`
 - [ ] Smoke test: registro → transferencia → auditoría
@@ -65,6 +66,7 @@ Seguir [DEMO.md](./DEMO.md). Antes de subir al escenario:
 
 | Síntoma | Causa probable | Acción |
 |---------|----------------|--------|
+| `No Next.js version detected` | Root Directory vacío y `next` solo en `frontend/package.json` | En Vercel: **Settings → General → Root Directory → `frontend`** y redeploy; **o** usar el `vercel.json` + `package.json` con workspaces en la raíz del repo |
 | Build falla en Vercel | Falta `--webpack` o circuitos | Ver `frontend/docs/DEPLOY.md` |
 | “SDK no listo” eterno | Sin wallet / Fuji | Conectar MetaMask en Fuji |
 | Transfer falla “no registrado” | Destino sin `register()` | Registrar wallet B primero |

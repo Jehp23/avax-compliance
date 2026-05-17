@@ -24,8 +24,9 @@ npm run start
 
 ## Deploy en Vercel
 
-1. **Import** del repo; **Root Directory** = `frontend`
-2. **Framework Preset** = Next.js
+1. **Import** del repo
+2. **Root Directory** = `frontend` (**obligatorio** si ves `No Next.js version detected`)
+3. **Framework Preset** = Next.js (auto si el root es `frontend`)
 3. **Build Command** (default o explícito):
 
    ```bash
@@ -75,6 +76,15 @@ Respuesta esperada:
 
 - `next.config.ts`: `transpilePackages: @avalabs/eerc-sdk`, webpack + polyfills (`crypto-browserify`)
 - El build **debe** usar webpack (`--webpack`), no solo Turbopack, por WASM/ZK
+
+## Error `No Next.js version detected`
+
+Vercel busca `next` en el `package.json` del **Root Directory** del proyecto.
+
+- **Opción A (recomendada):** Vercel → *Project Settings* → *General* → **Root Directory** → `frontend` → *Save* → *Redeploy*.
+- **Opción B:** Dejar Root Directory en la raíz del repo; el monorepo usa `workspaces` + `vercel.json` en la raíz (ver `../vercel.json`).
+
+No mezcles `installCommand: npm install --prefix frontend` con Root Directory vacío y `framework: nextjs` en la raíz: el install corre en `frontend/` pero la detección lee el `package.json` de la raíz.
 
 ## Checklist post-deploy
 

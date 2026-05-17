@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { type FormEvent, useState } from "react";
 import { formatUnits, isAddress, parseUnits } from "viem";
 import { useAccount } from "wagmi";
@@ -20,6 +21,7 @@ import { AuditCodeCard } from "@/components/cello/audit-code-card";
 import { CounterpartiesPanel } from "@/components/cello/counterparties-panel";
 import { ImportDemoKey } from "@/components/cello/import-demo-key";
 import { RestoreZkKey } from "@/components/cello/restore-zk-key";
+import { isEercConverterMode } from "@/lib/eerc-mode";
 import { useApprovedInstitutions } from "@/hooks/use-approved-institutions";
 import { getEercContractAddress } from "@/lib/contracts";
 import { loadDecryptionKey } from "@/lib/decryption-key-storage";
@@ -225,12 +227,20 @@ export function TransferenciasEerc() {
                 transferencia entrante desde otra institución en el mismo contrato (
                 {shortAddress(contract)}).
               </p>
-              <p className="panel-text text-sm mt-2">
-                Contrato del equipo Cello en Fuji:{" "}
-                <span className="font-mono">0x45C131…FD7F</span>. Si te registraste en
-                otro contrato (ej. 0x5E9c…), pedí mint ahí o volvé a registrarte con el
-                contrato del deploy.
-              </p>
+              {isEercConverterMode() ? (
+                <p className="panel-text text-sm mt-2">
+                  En modo converter cargá saldo en{" "}
+                  <Link href="/cargar" className="underline">
+                    Cargar
+                  </Link>{" "}
+                  (depositar TEST → saldo cifrado).
+                </p>
+              ) : (
+                <p className="panel-text text-sm mt-2">
+                  En standalone el operador acredita saldo con privateMint, o
+                  activá modo converter en el deploy para que cada usuario deposite.
+                </p>
+              )}
             </div>
           ) : null}
           {lastAuditCode ? (
