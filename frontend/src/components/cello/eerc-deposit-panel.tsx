@@ -4,15 +4,19 @@ import { type FormEvent, useEffect, useState } from "react";
 import { erc20Abi, formatUnits, parseUnits } from "viem";
 import {
   useAccount,
+  useBalance,
   useReadContract,
   useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
+import { avalancheFuji } from "wagmi/chains";
 
 import { Feedback } from "@/components/feedback";
 import { ZkProgress } from "@/components/zk-progress";
+import { WalletStatus } from "@/components/cello/wallet-status";
 import { useCelloEerc, useEncryptedBalanceHook } from "@/contexts/eerc-context";
 import { resolveConverterToken } from "@/lib/eerc-config";
+import { explorerAddressUrl } from "@/lib/explorer";
 import { formatTransferError } from "@/lib/format-transfer-error";
 import { shortAddress } from "@/lib/format-address";
 
@@ -33,6 +37,19 @@ export function EercDepositPanel() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [approveHash, setApproveHash] = useState<`0x${string}` | null>(null);
+
+  const { data: avaxBal, refetch: refetchAvax } = useBalance({
+    address,
+    chainId: avalancheFuji.id,
+    query: { enabled: Boolean(address) },
+  });
+
+  const { data: tokenSymbol } = useReadContract({
+    address: tokenAddress,
+    abi: erc20Abi,
+    functionName: "symbol",
+    query: { enabled: Boolean(tokenAddress) },
+  });
 
   const { data: tokenDecimals } = useReadContract({
     address: tokenAddress,
@@ -154,6 +171,7 @@ export function EercDepositPanel() {
         `Depósito confirmado · ${shortAddress(transactionHash)}. Revisá Transferencias.`,
       );
       void refetchPublic();
+      void refetchAvax();
       void refetchAllowance();
       refetchBalance();
     } catch (err) {
@@ -175,82 +193,198 @@ export function EercDepositPanel() {
 
   const parsed = parseAmount();
   const needsApprove = parsed !== null && (allowance ?? 0n) < parsed;
+  const symbol = tokenSymbol ?? "TEST";
+  const avaxDisplay =
+    avaxBal?.value !== undefined
+      ? `${formatUnits(avaxBal.value, avaxBal.decimals)} AVAX`
+      : "—";
+  const registeredOnThisContract = sdk.isRegistered;
+  const decrypted = decryptedBalance ?? 0n;
+
+  function useMaxPublic() {
+    if (publicBal !== undefined && publicBal > 0n) {
+      setAmount(formatUnits(publicBal, decimals));
+    }
+  }
+
+  async function addTokenToWallet() {
+    const provider = (
+      window as Window & {
+        ethereum?: { request: (args: unknown) => Promise<unknown> };
+      }
+    ).ethereum;
+    if (!tokenAddress || !provider) return;
+    try {
+      await provider.request({
+        method: "wallet_watchAsset",
+        params: {
+          type: "ERC20",
+          options: {
+            address: tokenAddress,
+            symbol: String(symbol).slice(0, 11),
+            decimals,
+          },
+        },
+      });
+    } catch {
+      /* usuario canceló */
+    }
+  }
 
   return (
-    <div className="panel">
-      <p className="panel-label">Cargar saldo (modo converter)</p>
-      <p className="panel-text text-sm">
-        Depositás tokens <strong>públicos</strong> TEST y el contrato los convierte
-        a saldo <strong>cifrado</strong> eERC. No hace falta mint del operador.
-      </p>
+    <>
+      <WalletStatus />
 
-      <dl className="session-backup-card__meta mt-3">
-        <div className="session-backup-card__meta-row">
-          <dt>Token público</dt>
-          <dd>{tokenAddress ? shortAddress(tokenAddress) : "—"}</dd>
-        </div>
-        <div className="session-backup-card__meta-row">
-          <dt>Contrato eERC</dt>
-          <dd>{shortAddress(contractAddress)}</dd>
-        </div>
-        <div className="session-backup-card__meta-row">
-          <dt>Saldo público</dt>
-          <dd>{publicDisplay} TEST</dd>
-        </div>
-        <div className="session-backup-card__meta-row">
-          <dt>Saldo cifrado</dt>
-          <dd>{encryptedDisplay}</dd>
-        </div>
-      </dl>
+      <div className="panel mt-4">
+        <p className="panel-label">Tu wallet en Fuji</p>
+        <p className="panel-text text-sm">
+          Lo que ves acá es tu cuenta en <strong>Avalanche Fuji</strong>. MetaMask
+          puede mostrar otros activos en otras redes; para cargar eERC necesitás el
+          token <strong>{symbol}</strong> (columna del medio).
+        </p>
 
-      {!isConnected ? (
-        <Feedback message="Conectá tu wallet en Fuji." variant="info" />
-      ) : null}
-      {publicBal === 0n ? (
-        <Feedback
-          message="No tenés TEST públicos. Pedí mint del token demo al equipo o usá el faucet del deploy."
-          variant="info"
-        />
-      ) : null}
+        <div className="grid gap-3 mt-4 sm:grid-cols-3">
+          <div className="rounded-lg border border-[var(--border)] p-3">
+            <p className="text-[11px] uppercase tracking-wide text-[var(--text2)]">
+              Gas (nativo)
+            </p>
+            <p className="text-lg font-semibold mt-1 tabular-nums">{avaxDisplay}</p>
+            <p className="text-xs text-[var(--text2)] mt-1">Comisiones de red</p>
+          </div>
+          <div className="rounded-lg border border-[var(--border)] p-3">
+            <p className="text-[11px] uppercase tracking-wide text-[var(--text2)]">
+              {symbol} en wallet
+            </p>
+            <p className="text-lg font-semibold mt-1 tabular-nums">
+              {publicDisplay} {symbol}
+            </p>
+            <p className="text-xs text-[var(--text2)] mt-1">Se deposita y pasa a cifrado</p>
+            {tokenAddress ? (
+              <button
+                type="button"
+                className="text-xs underline mt-2 text-[var(--text2)]"
+                onClick={() => void addTokenToWallet()}
+              >
+                Ver {symbol} en MetaMask
+              </button>
+            ) : null}
+          </div>
+          <div className="rounded-lg border border-[var(--border)] p-3">
+            <p className="text-[11px] uppercase tracking-wide text-[var(--text2)]">
+              Saldo cifrado eERC
+            </p>
+            <p className="text-lg font-semibold mt-1 tabular-nums">{encryptedDisplay}</p>
+            <p className="text-xs text-[var(--text2)] mt-1">Usado en Transferencias</p>
+          </div>
+        </div>
 
-      <form className="mt-4" onSubmit={onDeposit}>
-        <label className="fl">
-          <span className="fl-label">Monto a depositar</span>
-          <input
-            className="fl-input"
-            inputMode="decimal"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="100"
+        <dl className="session-backup-card__meta mt-4">
+          <div className="session-backup-card__meta-row">
+            <dt>Tu cuenta</dt>
+            <dd>{address ? shortAddress(address) : "—"}</dd>
+          </div>
+          <div className="session-backup-card__meta-row">
+            <dt>Token ERC20 ({symbol})</dt>
+            <dd>
+              {tokenAddress ? (
+                <a
+                  href={explorerAddressUrl(tokenAddress)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline"
+                >
+                  {shortAddress(tokenAddress)}
+                </a>
+              ) : (
+                "—"
+              )}
+            </dd>
+          </div>
+          <div className="session-backup-card__meta-row">
+            <dt>Contrato eERC</dt>
+            <dd>{shortAddress(contractAddress)}</dd>
+          </div>
+        </dl>
+
+        {!isConnected ? (
+          <Feedback message="Conectá tu wallet en Fuji." variant="info" />
+        ) : null}
+        {isConnected && !registeredOnThisContract ? (
+          <Feedback
+            message="Esta wallet no está registrada en el contrato eERC actual. Andá a Registro con la misma cuenta (contrato converter)."
+            variant="info"
           />
-        </label>
+        ) : null}
+        {isConnected && registeredOnThisContract && !hasDecryptionKey ? (
+          <Feedback
+            message="Falta la clave ZK en este navegador. Completá Registro o importá tu JSON de sesión."
+            variant="info"
+          />
+        ) : null}
+        {isConnected && publicBal === 0n ? (
+          <Feedback
+            message={`Tenés 0 ${symbol} en este token. Si en MetaMask ves AVAX u otro activo, es distinto: acá solo cuenta el ERC20 demo en ${tokenAddress ? shortAddress(tokenAddress) : "Fuji"}. Pedí mint al equipo.`}
+            variant="info"
+          />
+        ) : null}
+        {isConnected && publicBal !== undefined && publicBal > 0n && decrypted === 0n ? (
+          <Feedback
+            message={`Tenés ${publicDisplay} ${symbol} para depositar. Usá los pasos de abajo; después el saldo cifrado aparece en Transferencias.`}
+            variant="success"
+          />
+        ) : null}
 
-        <div className="session-backup-card__actions mt-3">
-          <button
-            type="button"
-            className="secondary-btn"
-            disabled={busy || !needsApprove || !address}
-            onClick={() => void onApprove()}
-          >
-            {step === "approve" ? "Aprobando…" : "1. Aprobar TEST"}
-          </button>
-          <button
-            type="submit"
-            className="primary-btn"
-            disabled={
-              busy || needsApprove || !sdk.isRegistered || !hasDecryptionKey
-            }
-          >
-            {step === "deposit" ? "Depositando…" : "2. Depositar y cifrar"}
-          </button>
-        </div>
-      </form>
+        <p className="panel-label mt-5">Convertir {symbol} → saldo cifrado</p>
 
-      <Feedback message={error} variant="error" />
-      <Feedback
-        message={feedback}
-        variant={feedback?.includes("confirmado") ? "success" : "info"}
-      />
-    </div>
+        <form className="mt-3" onSubmit={onDeposit}>
+          <label className="fl">
+            <span className="fl-label">Monto a depositar</span>
+            <div className="flex gap-2">
+              <input
+                className="fl-input flex-1"
+                inputMode="decimal"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="100"
+              />
+              <button
+                type="button"
+                className="secondary-btn shrink-0"
+                disabled={!publicBal || publicBal === 0n}
+                onClick={useMaxPublic}
+              >
+                Máximo
+              </button>
+            </div>
+          </label>
+
+          <div className="session-backup-card__actions mt-3">
+            <button
+              type="button"
+              className="secondary-btn"
+              disabled={busy || !needsApprove || !address}
+              onClick={() => void onApprove()}
+            >
+              {step === "approve" ? "Aprobando…" : `1. Aprobar ${symbol}`}
+            </button>
+            <button
+              type="submit"
+              className="primary-btn"
+              disabled={
+                busy || needsApprove || !sdk.isRegistered || !hasDecryptionKey
+              }
+            >
+              {step === "deposit" ? "Depositando…" : "2. Depositar y cifrar"}
+            </button>
+          </div>
+        </form>
+
+        <Feedback message={error} variant="error" />
+        <Feedback
+          message={feedback}
+          variant={feedback?.includes("confirmado") ? "success" : "info"}
+        />
+      </div>
+    </>
   );
 }

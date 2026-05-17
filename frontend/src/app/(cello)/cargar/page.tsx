@@ -51,8 +51,8 @@ NEXT_PUBLIC_CONVERTER_ERC20_ADDRESS=0xb0Fe621B4Bd7fe4975f7c58E3D6ADaEb2a2A35CD`}
     <PageShell width="narrow">
       <PageHeader
         kicker="Cargar saldo"
-        title="Depositar TEST → eERC cifrado"
-        description="Aprobá el token público y depositá. El saldo aparece cifrado en Transferencias."
+        title="Tu wallet y depósito a eERC"
+        description="Arriba ves AVAX, el token público de tu cuenta y el saldo cifrado. Depositás el token público para poder transferir en privado."
       />
       <EercDepositPanel />
       <p className="mt-4 text-center text-sm">
