@@ -544,6 +544,8 @@ aside {
   background: var(--bg2);
   border: 1px solid var(--border);
   border-radius: 10px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .bal-label {
@@ -561,6 +563,10 @@ aside {
   color: var(--ink);
   letter-spacing: -0.5px;
   margin-bottom: 4px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bal-currency {

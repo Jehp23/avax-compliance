@@ -2,11 +2,7 @@
 
 import Link from "next/link";
 import { type FormEvent, useState } from "react";
-import {
-  formatEther,
-  isAddress,
-  parseEther,
-} from "viem";
+import { isAddress, parseEther } from "viem";
 import {
   useAccount,
   useBalance,
@@ -26,6 +22,7 @@ import { useMyInstitution } from "@/hooks/use-my-institution";
 import { getPublicEnv } from "@/lib/env";
 import { indexTransferOnServer } from "@/lib/index-transfer";
 import { isAvaxPaymentMode } from "@/lib/payment-asset";
+import { formatAvaxDisplay } from "@/lib/format-avax";
 import { shortAddress } from "@/lib/format-address";
 import { TransferenciasEerc } from "@/components/cello/transferencias-eerc";
 
@@ -61,8 +58,7 @@ function TransferenciasAvax() {
   const { isLoading: waitingReceipt, isSuccess: receiptOk } =
     useWaitForTransactionReceipt({ hash: pendingHash ?? undefined });
 
-  const avaxBal =
-    balance?.value != null ? formatEther(balance.value) : "—";
+  const avaxBal = formatAvaxDisplay(balance?.value);
 
   function pickCounterparty(addr?: `0x${string}`) {
     if (addr) {
@@ -129,7 +125,7 @@ function TransferenciasAvax() {
       const current = balance?.value ?? 0n;
       if (current < value + gasReserve) {
         setError(
-          `Saldo insuficiente: tenés ${formatEther(current)} AVAX (dejá ~0.002 para gas).`,
+          `Saldo insuficiente: tenés ${formatAvaxDisplay(current)} AVAX (dejá ~0.002 para gas).`,
         );
         return;
       }
