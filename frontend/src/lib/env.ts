@@ -16,6 +16,7 @@ export type CelloPublicEnv = {
     rutalog?: `0x${string}`;
   };
   auditorPreviewSecret: string | null;
+  showDevStatusBar: boolean;
 };
 
 function readAddress(key: string): `0x${string}` | null {
@@ -41,7 +42,7 @@ export function getPublicEnv(): CelloPublicEnv {
   }
 
   const paymentAsset: PaymentAsset =
-    process.env.NEXT_PUBLIC_PAYMENT_ASSET === "eerc" ? "eerc" : "avax";
+    process.env.NEXT_PUBLIC_PAYMENT_ASSET === "avax" ? "avax" : "eerc";
 
   return {
     paymentAsset,
@@ -60,6 +61,7 @@ export function getPublicEnv(): CelloPublicEnv {
     },
     auditorPreviewSecret:
       process.env.NEXT_PUBLIC_AUDITOR_PREVIEW_SECRET?.trim() || null,
+    showDevStatusBar: process.env.NEXT_PUBLIC_SHOW_DEV_STATUS_BAR === "1",
   };
 }
 

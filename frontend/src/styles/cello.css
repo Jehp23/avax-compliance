@@ -1748,7 +1748,54 @@ aside {
   color: var(--text4);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
+}
+
+.panel-hint {
+  font-size: 11px;
+  color: var(--text3);
+  line-height: 1.45;
+  margin: 0 0 12px;
+}
+
+.panel--directory .panel-label {
+  margin-bottom: 4px;
+}
+
+.cp-empty {
+  padding: 10px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: var(--bg2);
+}
+
+.cp-empty-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  margin: 0 0 4px;
+}
+
+.cp-empty-text {
+  font-size: 11px;
+  color: var(--text3);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.panel-foot {
+  margin: 12px 0 0;
+  font-size: 11px;
+}
+
+.panel-foot-link {
+  color: var(--text2);
+  text-decoration: none;
+}
+
+.panel-foot-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .panel-title {

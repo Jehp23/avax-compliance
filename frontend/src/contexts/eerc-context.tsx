@@ -115,7 +115,7 @@ export function EercProvider({
 }) {
   const env = useMemo(() => getPublicEnv(), []);
   const contractAddress = useMemo(() => resolveEercContract(env), [env]);
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
 
   const [circuitOrigin, setCircuitOrigin] = useState(appOrigin);
   useLayoutEffect(() => {
@@ -124,26 +124,47 @@ export function EercProvider({
   }, [appOrigin]);
 
   const [decryptionKey, setDecryptionKey] = useState<string | undefined>(() =>
-    typeof window === "undefined" ? undefined : loadDecryptionKey(),
+    typeof window === "undefined" ? undefined : undefined,
   );
 
   useEffect(() => {
+    if (!address) {
+      setDecryptionKey(undefined);
+      return;
+    }
+    const stored = loadDecryptionKey(address, contractAddress);
+    setDecryptionKey(stored);
+  }, [address, contractAddress]);
+
+  useEffect(() => {
     const sync = () => {
-      const stored = loadDecryptionKey();
+      if (!address) return;
+      const stored = loadDecryptionKey(address, contractAddress);
       if (stored) setDecryptionKey(stored);
     };
     window.addEventListener("focus", sync);
     return () => window.removeEventListener("focus", sync);
-  }, []);
+  }, [address, contractAddress]);
 
-  const persistDecryptionKey = useCallback((key: string) => {
-    saveDecryptionKey(key);
-    setDecryptionKey(key);
-  }, []);
+  const persistDecryptionKey = useCallback(
+    (key: string) => {
+      if (address) {
+        saveDecryptionKey(key, address, contractAddress);
+      } else {
+        saveDecryptionKey(key);
+      }
+      setDecryptionKey(key);
+    },
+    [address, contractAddress],
+  );
 
   const refreshDecryptionKey = useCallback(() => {
-    setDecryptionKey(loadDecryptionKey());
-  }, []);
+    if (!address) {
+      setDecryptionKey(undefined);
+      return;
+    }
+    setDecryptionKey(loadDecryptionKey(address, contractAddress));
+  }, [address, contractAddress]);
 
   return (
     <EercSdkRuntime

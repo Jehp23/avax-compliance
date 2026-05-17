@@ -46,7 +46,7 @@ export function WalletStatus() {
       : [
           {
             key: "Clave ZK",
-            value: hasDecryptionKey ? "en sesión" : "falta",
+            value: hasDecryptionKey ? "guardada" : "falta",
             ok: hasDecryptionKey,
           },
         ]),

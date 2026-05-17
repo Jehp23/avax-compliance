@@ -15,6 +15,12 @@ import { indexTransferOnServer } from "@/lib/index-transfer";
 import { isAvaxPaymentMode, isEercPaymentMode } from "@/lib/payment-asset";
 import { shortAddress } from "@/lib/format-address";
 import { getEercContractAddress } from "@/lib/contracts";
+import {
+  loadCelloSession,
+  saveCelloSession,
+  sessionMatches,
+} from "@/lib/cello-session";
+import { formatTransferError } from "@/lib/format-transfer-error";
 
 export default function RegistroPage() {
   const router = useRouter();
@@ -38,6 +44,22 @@ export default function RegistroPage() {
   const registered = avaxMode ? institutionOk : sdk.isRegistered;
   const sdkReady =
     Boolean(sdk) && sdk.isInitialized && sdk.isAllDataFetched;
+
+  useEffect(() => {
+    if (!address || avaxMode) return;
+    const session = loadCelloSession();
+    if (sessionMatches(session, address, contractAddress) && session) {
+      if (session.institution) {
+        setInstitutionName(session.institution.name);
+        setInstitutionInitials(session.institution.initials);
+      }
+      if (hasDecryptionKey) {
+        setFeedback(
+          "Sesión local restaurada: clave ZK y datos de registro en este navegador.",
+        );
+      }
+    }
+  }, [address, avaxMode, contractAddress, hasDecryptionKey]);
 
   useEffect(() => {
     if (!address) return;
@@ -130,6 +152,21 @@ export default function RegistroPage() {
       setFeedback("Generando prueba ZK y registro on-chain (1–2 min)…");
       const { key, transactionHash } = await sdk.register();
       persistDecryptionKey(key);
+      const initials =
+        institutionInitials.trim() ||
+        institutionName.trim().slice(0, 2).toUpperCase();
+      saveCelloSession({
+        v: 1,
+        walletAddress: address!,
+        contractAddress,
+        decryptionKey: key,
+        registeredAt: new Date().toISOString(),
+        registerTxHash: transactionHash,
+        institution: {
+          name: institutionName.trim(),
+          initials,
+        },
+      });
       setLastTx(transactionHash as `0x${string}`);
       await saveInstitution();
       void indexTransferOnServer({
@@ -138,9 +175,11 @@ export default function RegistroPage() {
         transferType: "register",
         contractAddress: getEercContractAddress(),
       });
-      setFeedback(`Registro eERC exitoso · ${shortAddress(contractAddress)}`);
+      setFeedback(
+        `Registro eERC exitoso. Sesión guardada en este navegador · ${shortAddress(contractAddress)}`,
+      );
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al registrar en eERC20.");
+      setError(formatTransferError(e));
     } finally {
       setBusy(false);
     }
@@ -239,7 +278,7 @@ export default function RegistroPage() {
           checked={kycAccepted}
           onChange={(e) => setKycAccepted(e.target.checked)}
         />
-        Confirmo operar como institución autorizada (demo Fuji).
+        Confirmo operar como institución autorizada en la red de prueba Fuji.
       </label>
 
       {!registered ? (
@@ -279,7 +318,7 @@ export default function RegistroPage() {
       <div className="note mt-4" role="note">
         {avaxMode
           ? "Pagos en AVAX nativo (Fuji testnet). Necesitás AVAX para gas y monto."
-          : `Contrato eERC ${shortAddress(contractAddress)}`}
+          : `Contrato eERC ${shortAddress(contractAddress)}. La sesión (clave ZK + institución) se guarda en sessionStorage como JSON en este navegador.`}
       </div>
     </PageShell>
   );

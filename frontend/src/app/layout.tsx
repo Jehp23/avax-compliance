@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Cello · eERC20 en Avalanche",
     description:
-      "Privados para el sistema financiero · auditables para el regulador. Hackathon Avalanche LatAm.",
+      "Pagos institucionales privados en Avalanche · auditables para el regulador.",
     type: "website",
     locale: "es_MX",
   },

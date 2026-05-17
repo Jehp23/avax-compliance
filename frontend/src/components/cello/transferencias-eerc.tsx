@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { type FormEvent, useState } from "react";
 import { formatUnits, isAddress, parseUnits } from "viem";
 import { useAccount } from "wagmi";
@@ -18,6 +17,7 @@ import {
   useCelloEerc,
 } from "@/contexts/eerc-context";
 import { AuditCodeCard } from "@/components/cello/audit-code-card";
+import { CounterpartiesPanel } from "@/components/cello/counterparties-panel";
 import { useApprovedInstitutions } from "@/hooks/use-approved-institutions";
 import { getEercContractAddress } from "@/lib/contracts";
 import { loadDecryptionKey } from "@/lib/decryption-key-storage";
@@ -69,16 +69,21 @@ export function TransferenciasEerc() {
         return;
       }
       if (!sdk.isRegistered) {
-        setError("Completá el registro en /registro antes de transferir.");
-        return;
-      }
-      if (!loadDecryptionKey() && !hasDecryptionKey) {
         setError(
-          "Falta la clave ZK. Completá el registro en /registro con esta wallet (mismo navegador).",
+          "Completá el onboarding institucional (menú Registro) antes de transferir.",
         );
         return;
       }
-      const storedKey = loadDecryptionKey();
+      if (
+        !loadDecryptionKey(address, contract) &&
+        !hasDecryptionKey
+      ) {
+        setError(
+          "Falta la clave ZK. Completá el onboarding en Registro con esta wallet (mismo navegador).",
+        );
+        return;
+      }
+      const storedKey = loadDecryptionKey(address, contract);
       if (storedKey && !hasDecryptionKey) {
         persistDecryptionKey(storedKey);
       }
@@ -90,7 +95,7 @@ export function TransferenciasEerc() {
       const { isRegistered: destOk } = await sdk.isAddressRegistered(trimmed);
       if (!destOk) {
         setError(
-          "El destinatario debe estar registrado en eERC20. Pedile que complete /registro en Cello.",
+          "El destinatario debe estar registrado en eERC20 y en el directorio de Cello.",
         );
         return;
       }
@@ -124,7 +129,7 @@ export function TransferenciasEerc() {
       }
       if (!balance.encryptedBalance?.length) {
         setError(
-          "No hay saldo cifrado cargado. Recargá la clave en /registro y esperá unos segundos.",
+          "No hay saldo cifrado cargado. Volvé a Registro para cargar la clave ZK y esperá unos segundos.",
         );
         return;
       }
@@ -196,7 +201,7 @@ export function TransferenciasEerc() {
           <Feedback message={error} variant="error" />
           {sdk.isRegistered && !hasDecryptionKey ? (
             <Feedback
-              message="Completá /registro en este navegador para cargar tu clave ZK."
+              message="Completá el onboarding en Registro (mismo navegador) para cargar la clave ZK."
               variant="info"
             />
           ) : null}
@@ -288,47 +293,11 @@ export function TransferenciasEerc() {
           <TransferHistory address={address} refreshKey={historyKey} />
         </div>
 
-        <aside className="right" aria-label="Contrapartes">
-          <div className="panel">
-            <p className="panel-label">Contrapartes</p>
-            <div className="cp-list">
-              {loadingCp ? (
-                <p className="panel-text text-sm">Cargando instituciones…</p>
-              ) : counterparties.length === 0 ? (
-                <p className="panel-text text-sm">
-                  Aún no hay otras instituciones. Compartí Cello para que se registren en /registro.
-                </p>
-              ) : (
-                counterparties.map((cp) => (
-                  <button
-                    key={cp.walletAddress}
-                    type="button"
-                    className="cp"
-                    onClick={() =>
-                      pickCounterparty(cp.walletAddress as `0x${string}`)
-                    }
-                  >
-                    <span className="cp-av">{cp.initials}</span>
-                    <span className="cp-body">
-                      <span className="cp-name">{cp.name}</span>
-                      <span className="cp-addr">
-                        {shortAddress(cp.walletAddress as `0x${string}`)}
-                      </span>
-                    </span>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-          <p className="panel-text mt-3">
-            <Link
-              href="/recibir"
-              className="text-[var(--text2)] underline-offset-2 hover:underline"
-            >
-              Recibir pagos →
-            </Link>
-          </p>
-        </aside>
+        <CounterpartiesPanel
+          institutions={counterparties}
+          loading={loadingCp}
+          onSelect={pickCounterparty}
+        />
       </div>
     </PageShell>
   );

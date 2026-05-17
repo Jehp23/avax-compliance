@@ -2,8 +2,11 @@
 
 import { useCircuitsReady } from "@/hooks/use-circuits-ready";
 import { getEercContractAddress } from "@/lib/contracts";
+import { isAvaxPaymentMode } from "@/lib/payment-asset";
 
 export function ConfigBanner() {
+  if (isAvaxPaymentMode()) return null;
+
   const circuitsOk = useCircuitsReady();
 
   if (circuitsOk !== false) return null;

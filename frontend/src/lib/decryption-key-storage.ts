@@ -1,38 +1,74 @@
-const STORAGE_KEY = "cello-eerc-decryption-key";
-const LEGACY_STORAGE_KEY = "veila-eerc-decryption-key";
+import {
+  clearCelloSession,
+  loadSessionDecryptionKey,
+  mergeCelloSession,
+} from "@/lib/cello-session";
 
-export function loadDecryptionKey(): string | undefined {
+const LEGACY_STORAGE_KEY = "cello-eerc-decryption-key";
+const LEGACY_VEILA_KEY = "veila-eerc-decryption-key";
+
+export function loadDecryptionKey(
+  wallet?: string,
+  contract?: string,
+): string | undefined {
   if (typeof window === "undefined") return undefined;
+
+  const fromSession = loadSessionDecryptionKey(wallet, contract);
+  if (fromSession) return fromSession;
+
   try {
-    return (
-      sessionStorage.getItem(STORAGE_KEY) ??
+    const legacy =
       sessionStorage.getItem(LEGACY_STORAGE_KEY) ??
-      undefined
-    );
+      sessionStorage.getItem(LEGACY_VEILA_KEY) ??
+      undefined;
+    if (!legacy) return undefined;
+    if (wallet && contract) {
+      mergeCelloSession({
+        walletAddress: wallet,
+        contractAddress: contract,
+        decryptionKey: legacy,
+      });
+      sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+      sessionStorage.removeItem(LEGACY_VEILA_KEY);
+    }
+    return legacy;
   } catch {
     return undefined;
   }
 }
 
-export function saveDecryptionKey(key: string): void {
+export function saveDecryptionKey(
+  key: string,
+  wallet?: string,
+  contract?: string,
+): void {
   if (typeof window === "undefined") return;
   try {
-    sessionStorage.setItem(STORAGE_KEY, key);
-    sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+    if (wallet && contract) {
+      mergeCelloSession({
+        walletAddress: wallet,
+        contractAddress: contract,
+        decryptionKey: key,
+      });
+      return;
+    }
+    sessionStorage.setItem(LEGACY_STORAGE_KEY, key);
+    sessionStorage.removeItem(LEGACY_VEILA_KEY);
   } catch {
     // ignore quota / private mode
   }
 }
 
-export function hasDecryptionKey(): boolean {
-  return Boolean(loadDecryptionKey());
+export function hasDecryptionKey(wallet?: string, contract?: string): boolean {
+  return Boolean(loadDecryptionKey(wallet, contract));
 }
 
 export function clearDecryptionKey(): void {
   if (typeof window === "undefined") return;
   try {
-    sessionStorage.removeItem(STORAGE_KEY);
+    clearCelloSession();
     sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+    sessionStorage.removeItem(LEGACY_VEILA_KEY);
   } catch {
     // ignore
   }

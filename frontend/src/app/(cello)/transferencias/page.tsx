@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { type FormEvent, useState } from "react";
 import { isAddress, parseEther } from "viem";
 import {
@@ -14,6 +13,7 @@ import { Feedback } from "@/components/feedback";
 import { TxLink } from "@/components/tx-link";
 import { TransferHistory } from "@/components/transfer-history";
 import { AuditCodeCard } from "@/components/cello/audit-code-card";
+import { CounterpartiesPanel } from "@/components/cello/counterparties-panel";
 import { PageHeader } from "@/components/cello/page-header";
 import { PageShell } from "@/components/cello/page-shell";
 import { WalletStatus } from "@/components/cello/wallet-status";
@@ -23,7 +23,6 @@ import { getPublicEnv } from "@/lib/env";
 import { indexTransferOnServer } from "@/lib/index-transfer";
 import { isAvaxPaymentMode } from "@/lib/payment-asset";
 import { formatAvaxDisplay } from "@/lib/format-avax";
-import { shortAddress } from "@/lib/format-address";
 import { TransferenciasEerc } from "@/components/cello/transferencias-eerc";
 
 export default function TransferenciasPage() {
@@ -80,7 +79,9 @@ function TransferenciasAvax() {
         return;
       }
       if (!myInstitutionOk) {
-        setError("Completá tu registro institucional en /registro.");
+        setError(
+          "Completá el onboarding institucional (menú Registro) antes de transferir.",
+        );
         return;
       }
       const trimmed = destination.trim();
@@ -98,7 +99,7 @@ function TransferenciasAvax() {
       );
       if (!destApproved) {
         setError(
-          "El destinatario debe estar registrado en Cello (/registro). Elegí una contraparte de la lista.",
+          "El destinatario debe figurar en el directorio de instituciones verificadas. Seleccioná una contraparte de la lista.",
         );
         return;
       }
@@ -193,7 +194,7 @@ function TransferenciasAvax() {
           <Feedback message={error} variant="error" />
           {!loadingMe && !myInstitutionOk ? (
             <Feedback
-              message="Registrate en /registro antes de transferir."
+              message="Completá el onboarding institucional (menú Registro) antes de transferir."
               variant="info"
             />
           ) : null}
@@ -283,47 +284,11 @@ function TransferenciasAvax() {
           <TransferHistory address={address} refreshKey={historyKey} />
         </div>
 
-        <aside className="right" aria-label="Contrapartes">
-          <div className="panel">
-            <p className="panel-label">Contrapartes</p>
-            <div className="cp-list">
-              {loadingCp ? (
-                <p className="panel-text text-sm">Cargando…</p>
-              ) : counterparties.length === 0 ? (
-                <p className="panel-text text-sm">
-                  Tu amigo debe registrarse en /registro para aparecer acá.
-                </p>
-              ) : (
-                counterparties.map((cp) => (
-                  <button
-                    key={cp.walletAddress}
-                    type="button"
-                    className="cp"
-                    onClick={() =>
-                      pickCounterparty(cp.walletAddress as `0x${string}`)
-                    }
-                  >
-                    <span className="cp-av">{cp.initials}</span>
-                    <span className="cp-body">
-                      <span className="cp-name">{cp.name}</span>
-                      <span className="cp-addr">
-                        {shortAddress(cp.walletAddress as `0x${string}`)}
-                      </span>
-                    </span>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-          <p className="panel-text mt-3">
-            <Link
-              href="/recibir"
-              className="text-[var(--text2)] underline-offset-2 hover:underline"
-            >
-              Recibir pagos →
-            </Link>
-          </p>
-        </aside>
+        <CounterpartiesPanel
+          institutions={counterparties}
+          loading={loadingCp}
+          onSelect={pickCounterparty}
+        />
       </div>
     </PageShell>
   );
