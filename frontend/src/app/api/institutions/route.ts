@@ -10,15 +10,24 @@ function normalizeAddr(addr: string): `0x${string}` {
   return addr.toLowerCase() as `0x${string}`;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   if (!isDatabaseConfigured()) {
     return Response.json({ institutions: [], db: false });
   }
 
-  const rows = await getDb()
-    .select()
-    .from(schema.institutions)
-    .orderBy(desc(schema.institutions.createdAt));
+  const approvedOnly = req.nextUrl.searchParams.get("approved") === "true";
+
+  const db = getDb();
+  const rows = approvedOnly
+    ? await db
+        .select()
+        .from(schema.institutions)
+        .where(eq(schema.institutions.kycStatus, "approved"))
+        .orderBy(desc(schema.institutions.createdAt))
+    : await db
+        .select()
+        .from(schema.institutions)
+        .orderBy(desc(schema.institutions.createdAt));
 
   return Response.json({ institutions: rows, db: true });
 }

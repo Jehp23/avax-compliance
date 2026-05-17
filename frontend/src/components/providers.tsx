@@ -6,13 +6,7 @@ import { type State, WagmiProvider } from "wagmi";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { EercProvider } from "@/contexts/eerc-context";
-import { useAutoDemoUnlock } from "@/hooks/use-auto-demo-unlock";
 import { createWagmiConfig } from "@/lib/wagmi-config";
-
-function AutoDemoUnlock({ children }: { children: ReactNode }) {
-  useAutoDemoUnlock();
-  return <>{children}</>;
-}
 
 type ProvidersProps = {
   children: ReactNode;
@@ -45,9 +39,7 @@ export function Providers({
     <WagmiProvider config={wagmiConfig} initialState={initialState}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <EercProvider appOrigin={appOrigin}>
-            <AutoDemoUnlock>{children}</AutoDemoUnlock>
-          </EercProvider>
+          <EercProvider appOrigin={appOrigin}>{children}</EercProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </WagmiProvider>

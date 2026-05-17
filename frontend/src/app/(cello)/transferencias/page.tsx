@@ -17,7 +17,8 @@ import {
   useEncryptedBalanceHook,
   useCelloEerc,
 } from "@/contexts/eerc-context";
-import { getVerifiedCounterparties } from "@/data/demo";
+import { AuditCodeCard } from "@/components/cello/audit-code-card";
+import { useApprovedInstitutions } from "@/hooks/use-approved-institutions";
 import { getEercContractAddress } from "@/lib/contracts";
 import { loadDecryptionKey } from "@/lib/decryption-key-storage";
 import { formatTransferError } from "@/lib/format-transfer-error";
@@ -38,8 +39,10 @@ export default function TransferenciasPage() {
   const [historyKey, setHistoryKey] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastAuditCode, setLastAuditCode] = useState<string | null>(null);
 
-  const counterparties = getVerifiedCounterparties();
+  const { institutions: counterparties, loading: loadingCp } =
+    useApprovedInstitutions(address);
   const decimals = balance.decimals ? Number(balance.decimals) : 18;
   const decrypted = balance.decryptedBalance ?? 0n;
   const bal =
@@ -71,7 +74,7 @@ export default function TransferenciasPage() {
       }
       if (!loadDecryptionKey() && !hasDecryptionKey) {
         setError(
-          "Falta la clave de descifrado. En /registro completá el onboarding o conectá una wallet institucional demo.",
+          "Falta la clave ZK. Completá el registro en /registro con esta wallet (mismo navegador).",
         );
         return;
       }
@@ -86,7 +89,18 @@ export default function TransferenciasPage() {
       }
       const { isRegistered: destOk } = await sdk.isAddressRegistered(trimmed);
       if (!destOk) {
-        setError("El destinatario debe estar registrado en eERC20.");
+        setError(
+          "El destinatario debe estar registrado en eERC20. Pedile que complete /registro en Cello.",
+        );
+        return;
+      }
+      const destInDirectory = counterparties.some(
+        (i) => i.walletAddress.toLowerCase() === trimmed.toLowerCase(),
+      );
+      if (counterparties.length > 0 && !destInDirectory) {
+        setError(
+          "El destino no está en el directorio de instituciones aprobadas. Elegí una contraparte de la lista.",
+        );
         return;
       }
       if (!amount.trim()) {
@@ -117,7 +131,7 @@ export default function TransferenciasPage() {
       if (decrypted < parsed) {
         setError(
           `Saldo insuficiente: tenés ${formatUnits(decrypted, decimals)} ${sdk.symbol || "CELL"} y querés enviar ${amountNormalized}. ` +
-            "Si sos FinNova u otra wallet sin mint, pedí mint al owner o usá Bankaool (deployer con CELL demo).",
+            "Saldo insuficiente. En testnet pedí mint CELL al operador del contrato.",
         );
         return;
       }
@@ -130,16 +144,25 @@ export default function TransferenciasPage() {
       );
       balance.refetchBalance();
       setLastTx(transactionHash as `0x${string}`);
-      setFeedback("Transferencia enviada correctamente.");
+      setLastAuditCode(null);
       setHistoryKey((k) => k + 1);
-      void indexTransferOnServer({
+      const indexed = await indexTransferOnServer({
         txHash: transactionHash,
         fromAddress: address,
         toAddress: trimmed,
         transferType: "transfer",
         reference: reference.trim() || undefined,
         contractAddress: contract,
+        amountDisplay: amountNormalized,
+        tokenSymbol: sdk.symbol || "CELL",
       });
+      const code = indexed?.auditAccessCode ?? indexed?.transfer?.auditAccessCode;
+      if (code) setLastAuditCode(code);
+      setFeedback(
+        code
+          ? `Transferencia enviada. Código de auditoría: ${code}`
+          : "Transferencia enviada correctamente.",
+      );
       setAmount("");
     } catch (err) {
       setError(formatTransferError(err));
@@ -173,9 +196,12 @@ export default function TransferenciasPage() {
           <Feedback message={error} variant="error" />
           {sdk.isRegistered && !hasDecryptionKey ? (
             <Feedback
-              message="Sincronizando credenciales… Si no aparece el saldo, pasá por /registro con la wallet institucional."
+              message="Completá /registro en este navegador para cargar tu clave ZK."
               variant="info"
             />
+          ) : null}
+          {lastAuditCode ? (
+            <AuditCodeCard auditAccessCode={lastAuditCode} txHash={lastTx} />
           ) : null}
           <Feedback
             message={feedback}
@@ -261,23 +287,32 @@ export default function TransferenciasPage() {
           <div className="panel">
             <p className="panel-label">Contrapartes</p>
             <div className="cp-list">
-              {counterparties.map((cp) => (
-                <button
-                  key={cp.addrShort}
-                  type="button"
-                  className="cp"
-                  disabled={!cp.address}
-                  onClick={() => pickCounterparty(cp.address)}
-                >
-                  <span className="cp-av">{cp.initials}</span>
-                  <span className="cp-body">
-                    <span className="cp-name">{cp.name}</span>
-                    <span className="cp-addr">
-                      {cp.address ? shortAddress(cp.address) : "sin .env"}
+              {loadingCp ? (
+                <p className="panel-text text-sm">Cargando instituciones…</p>
+              ) : counterparties.length === 0 ? (
+                <p className="panel-text text-sm">
+                  Aún no hay otras instituciones. Compartí Cello para que se registren en /registro.
+                </p>
+              ) : (
+                counterparties.map((cp) => (
+                  <button
+                    key={cp.walletAddress}
+                    type="button"
+                    className="cp"
+                    onClick={() =>
+                      pickCounterparty(cp.walletAddress as `0x${string}`)
+                    }
+                  >
+                    <span className="cp-av">{cp.initials}</span>
+                    <span className="cp-body">
+                      <span className="cp-name">{cp.name}</span>
+                      <span className="cp-addr">
+                        {shortAddress(cp.walletAddress as `0x${string}`)}
+                      </span>
                     </span>
-                  </span>
-                </button>
-              ))}
+                  </button>
+                ))
+              )}
             </div>
           </div>
           <p className="panel-text mt-3">

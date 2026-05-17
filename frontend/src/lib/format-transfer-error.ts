@@ -18,7 +18,7 @@ export function formatTransferError(err: unknown): string {
       "Monto inválido para esta transferencia. Suele pasar si: (1) el monto es 0 o vacío, " +
       "(2) el saldo descifrado es 0 o menor al monto (clave incorrecta o wallet sin mint), " +
       "(3) usás coma decimal — probá con punto, ej. 100.5. " +
-      "Pasá por /registro con la wallet institucional demo; el mint está en Bankaool (deployer)."
+      "Completá /registro y verificá saldo CELL en testnet."
     );
   }
 

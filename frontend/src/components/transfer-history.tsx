@@ -12,6 +12,9 @@ type TransferRow = {
   toAddress: string | null;
   transferType: string;
   reference: string | null;
+  auditAccessCode?: string | null;
+  amountDisplay?: string | null;
+  tokenSymbol?: string | null;
   indexedAt: string;
 };
 
@@ -94,7 +97,9 @@ export function TransferHistory({ address, refreshKey = 0 }: TransferHistoryProp
             <div className="tx-to">
               {counterparty ? shortAddress(counterparty) : "—"}
             </div>
-            <div className="tx-hash-sm">{row.reference ?? "—"}</div>
+            <div className="tx-hash-sm font-mono text-[11px]">
+              {row.auditAccessCode ?? "—"}
+            </div>
             <div>
               <TxLink hash={row.txHash} />
             </div>

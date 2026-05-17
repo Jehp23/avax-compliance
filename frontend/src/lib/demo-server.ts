@@ -28,15 +28,12 @@ export function isDemoUnlockConfigured(): boolean {
   );
 }
 
-/** Sin código en UI: desbloqueo automático para wallets demo (testnet). */
+/** Solo si DEMO_AUTO_UNLOCK=1 (hackathon). Producto: clave del register() en el browser. */
 export function isDemoAutoUnlockEnabled(): boolean {
-  if (
-    process.env.DEMO_AUTO_UNLOCK === "0" ||
-    process.env.DEMO_AUTO_UNLOCK === "false"
-  ) {
-    return false;
-  }
-  return isDemoUnlockConfigured();
+  return (
+    process.env.DEMO_AUTO_UNLOCK === "1" &&
+    isDemoUnlockConfigured()
+  );
 }
 
 export function resolveDemoRole(

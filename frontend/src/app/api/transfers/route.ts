@@ -1,14 +1,25 @@
-import { desc, eq, or } from "drizzle-orm";
+import { and, desc, eq, or } from "drizzle-orm";
 import { type NextRequest } from "next/server";
 import { isAddress, isHash } from "viem";
 
 import { getDb, isDatabaseConfigured, schema } from "@/db";
+import { generateAuditAccessCode } from "@/lib/audit-code";
 import { getEercContractAddress } from "@/lib/contracts";
 
 export const dynamic = "force-dynamic";
 
 function normalizeAddr(addr: string): string {
   return addr.toLowerCase();
+}
+
+async function isApprovedInstitution(wallet: string): Promise<boolean> {
+  const db = getDb();
+  const rows = await db
+    .select({ kycStatus: schema.institutions.kycStatus })
+    .from(schema.institutions)
+    .where(eq(schema.institutions.walletAddress, normalizeAddr(wallet)))
+    .limit(1);
+  return rows[0]?.kycStatus === "approved";
 }
 
 export async function GET(req: NextRequest) {
@@ -56,6 +67,8 @@ export async function POST(req: NextRequest) {
     transferType?: "register" | "transfer" | "mint" | "burn" | "other";
     reference?: string;
     contractAddress?: string;
+    amountDisplay?: string;
+    tokenSymbol?: string;
   };
 
   const txHash = body.txHash?.trim();
@@ -75,29 +88,66 @@ export async function POST(req: NextRequest) {
     to = normalizeAddr(body.toAddress);
   }
 
+  const transferType = body.transferType ?? "transfer";
+  if (transferType === "transfer" && to) {
+    const destApproved = await isApprovedInstitution(to);
+    if (!destApproved) {
+      return Response.json(
+        {
+          error:
+            "El destinatario debe estar registrado en Cello (institución aprobada).",
+        },
+        { status: 400 },
+      );
+    }
+  }
+
   const db = getDb();
   const contract =
     body.contractAddress?.trim() || getEercContractAddress();
+  const hash = txHash.toLowerCase();
 
-  try {
-    const [row] = await db
-      .insert(schema.indexedTransfers)
-      .values({
-        txHash: txHash.toLowerCase(),
-        fromAddress: normalizeAddr(from),
-        toAddress: to,
-        transferType: body.transferType ?? "transfer",
-        reference: body.reference?.trim() || null,
-        contractAddress: contract.toLowerCase(),
-      })
-      .onConflictDoNothing({ target: schema.indexedTransfers.txHash })
-      .returning();
+  const existing = await db
+    .select()
+    .from(schema.indexedTransfers)
+    .where(eq(schema.indexedTransfers.txHash, hash))
+    .limit(1);
 
-    return Response.json({ transfer: row ?? null, indexed: Boolean(row) });
-  } catch (err) {
-    return Response.json(
-      { error: err instanceof Error ? err.message : "Error al indexar" },
-      { status: 500 },
-    );
+  if (existing[0]) {
+    return Response.json({
+      transfer: existing[0],
+      indexed: false,
+      auditAccessCode: existing[0].auditAccessCode,
+    });
   }
+
+  let auditAccessCode = generateAuditAccessCode();
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      const [row] = await db
+        .insert(schema.indexedTransfers)
+        .values({
+          txHash: hash,
+          fromAddress: normalizeAddr(from),
+          toAddress: to,
+          transferType,
+          reference: body.reference?.trim() || null,
+          contractAddress: contract.toLowerCase(),
+          auditAccessCode,
+          amountDisplay: body.amountDisplay?.trim() || null,
+          tokenSymbol: body.tokenSymbol?.trim() || null,
+        })
+        .returning();
+
+      return Response.json({
+        transfer: row,
+        indexed: true,
+        auditAccessCode: row.auditAccessCode,
+      });
+    } catch {
+      auditAccessCode = generateAuditAccessCode();
+    }
+  }
+
+  return Response.json({ error: "No se pudo indexar la transferencia" }, { status: 500 });
 }

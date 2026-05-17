@@ -54,12 +54,17 @@ export const indexedTransfers = pgTable(
     transferType: transferTypeEnum("transfer_type").notNull().default("transfer"),
     reference: text("reference"),
     contractAddress: text("contract_address"),
+    /** Código para consultar esta transferencia en /auditoria (sin wallet). */
+    auditAccessCode: text("audit_access_code").notNull(),
+    amountDisplay: text("amount_display"),
+    tokenSymbol: text("token_symbol"),
     indexedAt: timestamp("indexed_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
   (t) => [
     uniqueIndex("indexed_transfers_hash_unique").on(t.txHash),
+    uniqueIndex("indexed_transfers_audit_code_unique").on(t.auditAccessCode),
     index("indexed_transfers_from_idx").on(t.fromAddress),
     index("indexed_transfers_to_idx").on(t.toAddress),
     index("indexed_transfers_indexed_at_idx").on(t.indexedAt),
